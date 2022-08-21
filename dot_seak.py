@@ -1,3 +1,4 @@
+from re import I
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
@@ -19,32 +20,18 @@ from tkinter import messagebox
 )
 """
 
-def file_read():
-    root = tkinter.TK()
-    root.withdraw()
-    fTyp = [("",".gwy")] #ファイルタイプ変更
-    iDir = os.path.abspath(os.path.dirname(__file__))
-    tkinter.messagebox.showinfo('あ','い')
-    file = tkinter.filedialog.askopenfilename(filetypes = fTyp,initialdir = iDir)
+#GUI展開
+root = tkinter.Tk()
+root.title(u"Dot Searcher")
+root.geometry("400x300")
 
-    return(file)
-
-def file_write(filename):
-    root = tkinter.Tk()
-    root.withdraw()
-    fTyp = [("gwy","*.gwy")]
-    iDir = os.path.abspath(os.path.dirname(__file__))
-    tkinter.messagebox.showinfo('う','え')
-    file = tkinter.filedialog.asksaveasfilename(filetypes = fTyp,initialdir=iDir,initialfile= filename)
-    
-    return(file)
-
-def empty(a):
-    pass
+#解析ファイル読み込み
+fTyp = [("Data file","*")]
+iDir =os.path.abspath(os.path.dirname(__file__))
+file_name = tkinter.filedialog.askopenfilename(filetypes=fTyp,initialdir=iDir)
 
 
 
-###########################
-path = file_read()
-filename,ext = os.path.splitext(os.path.basename(path))
-kernel = np.ones((2,2),no.uint8)
+
+
+root.mainloop()
