@@ -20,17 +20,37 @@ from tkinter import messagebox
 )
 """
 
+def file_read():
+    #解析ファイル読み込み
+    fTyp = [("Data file","*")]
+    iDir =os.path.abspath(os.path.dirname(__file__))
+    file_name = tkinter.filedialog.askopenfilename(filetypes=fTyp,initialdir=iDir)
+    return(file_name)
+
+def Contours(img_gray):
+
+    labels,contours = cv2.findContours(img_gray,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
+
+    Areas = []
+    Diameters = []
+    Density = []
+
+
+
+
 #GUI展開
 root = tkinter.Tk()
-root.title(u"Dot Searcher")
+root.title("Dot Searcher")
 root.geometry("400x300")
 
-#解析ファイル読み込み
-fTyp = [("Data file","*")]
-iDir =os.path.abspath(os.path.dirname(__file__))
-file_name = tkinter.filedialog.askopenfilename(filetypes=fTyp,initialdir=iDir)
+path = file_read()
+img = cv2.imread(path)
+img_gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
 
-
+#cv2.namedWindow("Image",cv2.WINDOW_KEEPRATIO)
+cv2.imshow("Image",img_gray)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
 
 
 
