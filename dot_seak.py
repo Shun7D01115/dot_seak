@@ -1,3 +1,4 @@
+from re import I
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
@@ -20,31 +21,53 @@ from tkinter import messagebox
 """
 
 def file_read():
-    root = tkinter.TK()
-    root.withdraw()
-    fTyp = [("",".gwy")] #ファイルタイプ変更
-    iDir = os.path.abspath(os.path.dirname(__file__))
-    tkinter.messagebox.showinfo('あ','い')
-    file = tkinter.filedialog.askopenfilename(filetypes = fTyp,initialdir = iDir)
+    #解析ファイル読み込み
+    fTyp = [("Data file","*")]
+    iDir =os.path.abspath(os.path.dirname(__file__))
+    file_name = tkinter.filedialog.askopenfilename(filetypes=fTyp,initialdir=iDir)
+    return(file_name)
 
-    return(file)
+def Contours(img_gray):
 
-def file_write(filename):
-    root = tkinter.Tk()
-    root.withdraw()
-    fTyp = [("gwy","*.gwy")]
-    iDir = os.path.abspath(os.path.dirname(__file__))
-    tkinter.messagebox.showinfo('う','え')
-    file = tkinter.filedialog.asksaveasfilename(filetypes = fTyp,initialdir=iDir,initialfile= filename)
-    
-    return(file)
+    labels,contours = cv2.findContours(img_gray,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
 
-def empty(a):
+    Areas = []
+    Diameters = []
+    Density = []
+
+def none(x):
     pass
 
+def Trackbar():
+    #閾値変化トラックバー
+    cv2.namedWindow("Threshold")
+    cv2.resizeWindow("Threshold",640,240)
+    cv2.createTrackbar("Threshold_low","Threshold",100,255,none)
+    cv2.createTrackbar("Threshold_high","Threshold",255,255,none)
+    cv2.createTrackbar("open","Threshold",2,5,none)
 
 
-###########################
+#GUI展開
+root = tkinter.Tk()
+root.title("Dot Searcher")
+root.geometry("400x300")
+
+#画像のグレースケール
 path = file_read()
-filename,ext = os.path.splitext(os.path.basename(path))
-kernel = np.ones((2,2),no.uint8)
+img = cv2.imread(path)
+img_gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+#img_blur = cv2.GaussianBlur(imgGray,(5,5),0)
+#imgContour = img.copy()
+
+Trackbar()
+
+#Gray画像表示
+#cv2.namedWindow("Image",cv2.WINDOW_KEEPRATIO)
+cv2.imshow("Image",img_gray)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
+
+
+
+
+root.mainloop()
