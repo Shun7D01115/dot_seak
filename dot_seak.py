@@ -1,4 +1,5 @@
 from re import I
+from turtle import Turtle
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
@@ -35,6 +36,8 @@ def Contours(img_gray):
     Diameters = []
     Density = []
 
+
+
 def none(x):
     pass
 
@@ -42,32 +45,42 @@ def Trackbar():
     #閾値変化トラックバー
     cv2.namedWindow("Threshold")
     cv2.resizeWindow("Threshold",640,240)
-    cv2.createTrackbar("Threshold_low","Threshold",100,255,none)
-    cv2.createTrackbar("Threshold_high","Threshold",255,255,none)
+    cv2.createTrackbar("Low","Threshold",100,255,none)
+    cv2.createTrackbar("High","Threshold",255,255,none)
     cv2.createTrackbar("open","Threshold",2,5,none)
 
 
 #GUI展開
-root = tkinter.Tk()
-root.title("Dot Searcher")
-root.geometry("400x300")
+#root = tkinter.Tk()
+#root.title("Dot Searcher")
+#root.geometry("400x300")
 
 #画像のグレースケール
 path = file_read()
-img = cv2.imread(path)
-img_gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-#img_blur = cv2.GaussianBlur(imgGray,(5,5),0)
-#imgContour = img.copy()
+file_name,ext = os.path.splitext(os.path.basename(path))
+kernel = np.ones((2,2),np.uint8)
 
 Trackbar()
 
-#Gray画像表示
-#cv2.namedWindow("Image",cv2.WINDOW_KEEPRATIO)
-cv2.imshow("Image",img_gray)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+img = cv2.imread(path)
+img_gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+#img_blur = cv2.GaussianBlur(imgGray,(5,5),0)
+imgContour = img.copy()
 
+while True:
+    imgContour = img.copy()
+    th_low = cv2.getTrackbarPos("Low","Threshold")
+    th_high = cv2.getTrackbarPos("High","Threshold")
+    hanpuku = cv2.getTrackbarPos("open","Threshold")
 
+    img_bit = cv2.inRange(img_gray,th_low,th_high)
+    opening = cv2.morphologyEx(img_bit,cv2.MORPH_OPEN,kernel,iterations=hanpuku)
+    
+    stack = np.hstack([img_gray,img_bit,opening])
 
+    cv2.namedWindow("Horizontal Stacking",cv2.WINDOW_NORMAL)
+    cv2.imshow("Horizontal Stacking",stack)
+    cv2.imshow("contours",imgContour)
 
-root.mainloop()
+    if cv2.waitKey(1) == 13: #Enter key
+        break
