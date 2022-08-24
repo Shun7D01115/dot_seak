@@ -67,6 +67,22 @@ img_gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
 #img_blur = cv2.GaussianBlur(imgGray,(5,5),0)
 imgContour = img.copy()
 
+
+"""
+    画像形式
+    グレースケールと二値化画像
+    
+    二値化画像によりナンバリング，エッジ，直径，面積，密度を求める
+    グレースケールによりドットの高さを求める>>高さの最大値の入力が必須
+    #高さと直径より楕円体，円柱近似による体積を計算
+    
+    >_<グレースケールを表示してエッジの閾値を選択>_<
+
+    ナンバリング，エッジ，直径，高さ，面積，密度を.xlsxに出力
+    ナンバリング画像を出力したい!!!
+"""
+
+
 while True:
     imgContour = img.copy()
     th_low = cv2.getTrackbarPos("Low","Threshold")
