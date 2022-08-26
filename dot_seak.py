@@ -1,3 +1,4 @@
+from pickletools import uint8
 from re import I
 from turtle import Turtle
 import cv2
@@ -21,6 +22,20 @@ from tkinter import messagebox
 )
 """
 
+"""
+    画像形式
+    グレースケールと二値化画像
+    
+    二値化画像によりナンバリング，エッジ，直径，面積，密度を求める
+    グレースケールによりドットの高さを求める>>高さの最大値の入力が必須
+    #高さと直径より楕円体，円柱近似による体積を計算
+    
+    >_<グレースケールを表示してエッジの閾値を選択>_<
+
+    ナンバリング，エッジ，直径，高さ，面積，密度を.xlsxに出力
+    ナンバリング画像を出力したい!!!
+"""
+
 def file_read():
     #解析ファイル読み込み
     fTyp = [("Data file","*")]
@@ -36,8 +51,6 @@ def Contours(img_gray):
     Diameters = []
     Density = []
 
-
-
 def none(x):
     pass
 
@@ -46,57 +59,34 @@ def Trackbar():
     cv2.namedWindow("Threshold")
     cv2.resizeWindow("Threshold",640,240)
     cv2.createTrackbar("Low","Threshold",100,255,none)
-    cv2.createTrackbar("High","Threshold",255,255,none)
-    cv2.createTrackbar("open","Threshold",2,5,none)
 
 
-#GUI展開
-#root = tkinter.Tk()
-#root.title("Dot Searcher")
-#root.geometry("400x300")
 
 #画像のグレースケール
 path = file_read()
 file_name,ext = os.path.splitext(os.path.basename(path))
-kernel = np.ones((2,2),np.uint8)
 
 Trackbar()
 
+
 img = cv2.imread(path)
 img_gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-#img_blur = cv2.GaussianBlur(imgGray,(5,5),0)
-imgContour = img.copy()
+threshold = cv2.getTrackbarPos("Low","Threshold")
+ret,img_bit = cv2.threshold(img_gray,threshold,255,cv2.THRESH_BINARY)
+kernel = np.ones((5,5),np.uint8)
+contours, hierarchy = cv2.findContours(img_bit,cv2.RETR_LIST,cv2.CHAIN_APPROX_NONE)
+
+for i in range(0,len(contours)):
+    if len(contours[i]) > 0:
+        if cv2.contourArea(contours[i]) < 500:
+            continue
+        rect = contours[i]
+        x,y,w,h = cv2.boundingRect(rect)
+        cv2.polylines(img,contours[i],True,(255,0,0),1)
+        cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),1)
 
 
-"""
-    画像形式
-    グレースケールと二値化画像
-    
-    二値化画像によりナンバリング，エッジ，直径，面積，密度を求める
-    グレースケールによりドットの高さを求める>>高さの最大値の入力が必須
-    #高さと直径より楕円体，円柱近似による体積を計算
-    
-    >_<グレースケールを表示してエッジの閾値を選択>_<
 
-    ナンバリング，エッジ，直径，高さ，面積，密度を.xlsxに出力
-    ナンバリング画像を出力したい!!!
-"""
-
-
-while True:
-    imgContour = img.copy()
-    th_low = cv2.getTrackbarPos("Low","Threshold")
-    th_high = cv2.getTrackbarPos("High","Threshold")
-    hanpuku = cv2.getTrackbarPos("open","Threshold")
-
-    img_bit = cv2.inRange(img_gray,th_low,th_high)
-    opening = cv2.morphologyEx(img_bit,cv2.MORPH_OPEN,kernel,iterations=hanpuku)
-    
-    stack = np.hstack([img_gray,img_bit,opening])
-
-    cv2.namedWindow("Horizontal Stacking",cv2.WINDOW_NORMAL)
-    cv2.imshow("Horizontal Stacking",stack)
-    cv2.imshow("contours",imgContour)
-
-    if cv2.waitKey(1) == 13: #Enter key
-        break
+cv2.imshow("img_th",img)
+cv2.waitKey()
+cv2.destroyAllWindows()
