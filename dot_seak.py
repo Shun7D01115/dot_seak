@@ -71,22 +71,33 @@ Trackbar()
 
 img = cv2.imread(path)
 img_gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-threshold = cv2.getTrackbarPos("Low","Threshold")
-ret,img_bit = cv2.threshold(img_gray,threshold,255,cv2.THRESH_BINARY)
 kernel = np.ones((5,5),np.uint8)
-contours, hierarchy = cv2.findContours(img_bit,cv2.RETR_LIST,cv2.CHAIN_APPROX_NONE)
+img_copy = img.copy()
 
-for i in range(0,len(contours)):
-    if len(contours[i]) > 0:
-        if cv2.contourArea(contours[i]) < 500:
-            continue
-        rect = contours[i]
-        x,y,w,h = cv2.boundingRect(rect)
-        cv2.polylines(img,contours[i],True,(255,0,0),1)
-        cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),1)
+while True:
+
+    img_copy = img.copy()
+
+    if cv2.waitKey(1) == 13:
+        break
+
+    threshold = cv2.getTrackbarPos("Low","Threshold")
+    ret,img_bit = cv2.threshold(img_gray,threshold,255,cv2.THRESH_BINARY)
+    contours, hierarchy = cv2.findContours(img_bit,cv2.RETR_LIST,cv2.CHAIN_APPROX_NONE)
+    #th2 = cv2.adaptiveThreshold(img,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY,11,2)
 
 
+    for i in range(0,len(contours)):
+        if len(contours[i]) > 0:
+            if cv2.contourArea(contours[i]) < 500:
+                continue
+            rect = contours[i]
+            x,y,w,h = cv2.boundingRect(rect)
+            cv2.polylines(img_copy,contours[i],True,(255,0,0),1)
+            cv2.rectangle(img_copy,(x,y),(x+w,y+h),(0,255,0),1)
 
-cv2.imshow("img_th",img)
+    cv2.imshow("img_th",img_copy)
+
+cv2.imshow("img_exp",img_copy)
 cv2.waitKey()
 cv2.destroyAllWindows()
