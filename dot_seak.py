@@ -98,6 +98,7 @@ while True:
 
     cv2.imshow("img_th",img_copy)
 
-cv2.imshow("img_exp",img_copy)
+##branchできてるかな?
+
 cv2.waitKey()
 cv2.destroyAllWindows()
