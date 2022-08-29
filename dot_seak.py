@@ -97,7 +97,9 @@ while True:
 
     for i in range(0, len(contours)):
         if len(contours[i]) > 0:
-            if cv2.contourArea(contours[i]) < 500:
+
+            #remove small objects
+            if cv2.contourArea(contours[i]) < 200:
                 continue
             rect = contours[i]
             x, y, w, h = cv2.boundingRect(rect)
