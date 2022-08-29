@@ -58,8 +58,8 @@ def Trackbar():
     #閾値変化トラックバー
     cv2.namedWindow("Threshold")
     cv2.resizeWindow("Threshold",640,240)
-    cv2.createTrackbar("Gaussian","Threshold",100,255,none)
-    cv2.createTrackbar("Minus","Threshold",0,255,none)
+    cv2.createTrackbar("Gaussian","Threshold",7,30,none)
+    cv2.createTrackbar("Threshold","Threshold",100,255,none)
 
 #画像のグレースケール
 path = file_read()
@@ -81,9 +81,10 @@ while True:
         break
 
     gaussian = cv2.getTrackbarPos("Gaussian","Threshold")
-    minus = cv2.getTrackbarPos("Minus","Threshold")
-    img_bit = cv2.adaptiveThreshold(img_gray,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY,gaussian,minus)
-    contours,hierarchy = cv2.findContours(img_bit,cv2.FETR_LIST,cv2.CHAIN_APPROX_NONE)
+    threshold = cv2.getTrackbarPos("Threshold","Threshold")
+    Blocksize = 2 * gaussian + 3
+    img_bit = cv2.adaptiveThreshold(img_gray,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY,Blocksize,threshold)
+    contours,hierarchy = cv2.findContours(img_bit,cv2.RETR_LIST,cv2.CHAIN_APPROX_NONE)
 
     #エッジ等の描画処理
     for i in range(0,len(contours)):
