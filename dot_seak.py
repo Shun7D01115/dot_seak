@@ -58,15 +58,20 @@ def Trackbar():
     #閾値変化トラックバー
     cv2.namedWindow("Threshold")
     cv2.resizeWindow("Threshold",640,240)
-    cv2.createTrackbar("Gaussian","Threshold",7,30,none)
-    cv2.createTrackbar("Threshold","Threshold",100,255,none)
+    cv2.createTrackbar("Gaussian","Threshold",7,100,none)
+    cv2.createTrackbar("Threshold","Threshold",2,5,none)
+
+def Adaptive():
+    gaussian = cv2.getTrackbarPos("Gaussian","Threshold")
+    threshold = cv2.getTrackbarPos("Threshold","Threshold")
+    blocksize = 2 * gaussian + 3
+    return(threshold,blocksize)
 
 #画像のグレースケール
 path = file_read()
 file_name,ext = os.path.splitext(os.path.basename(path))
 
 Trackbar()
-
 
 img = cv2.imread(path)
 img_gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
@@ -80,16 +85,16 @@ while True:
     if cv2.waitKey(1) == 13:
         break
 
-    gaussian = cv2.getTrackbarPos("Gaussian","Threshold")
-    threshold = cv2.getTrackbarPos("Threshold","Threshold")
-    Blocksize = 2 * gaussian + 3
-    img_bit = cv2.adaptiveThreshold(img_gray,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY,Blocksize,threshold)
-    contours,hierarchy = cv2.findContours(img_bit,cv2.RETR_LIST,cv2.CHAIN_APPROX_NONE)
+    threshold,blocksize = Adaptive()
+    img_bit = cv2.adaptiveThreshold(img_gray,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY,blocksize,threshold)
+    contours,hierarchy = cv2.findContours(img_bit,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
 
     #エッジ等の描画処理
     for i in range(0,len(contours)):
         if len(contours[i]) > 0:
-            if cv2.contourArea(contours[i]) < 500:
+
+            #remove small objects
+            if cv2.contourArea(contours[i]) < 200:
                 continue
             rect = contours[i]
             x,y,w,h = cv2.boundingRect(rect)
