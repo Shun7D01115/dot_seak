@@ -1,6 +1,6 @@
 from pickletools import uint8
 from re import I
-from turtle import Turtle
+from turtle import Turtle, width
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
@@ -29,8 +29,6 @@ from tkinter import messagebox
     二値化画像によりナンバリング，エッジ，直径，面積，密度を求める
     グレースケールによりドットの高さを求める>>高さの最大値の入力が必須
     #高さと直径より楕円体，円柱近似による体積を計算
-    
-    >_<グレースケールを表示してエッジの閾値を選択>_<
 
     ナンバリング，エッジ，直径，高さ，面積，密度を.xlsxに出力
     ナンバリング画像を出力したい!!!
@@ -43,13 +41,17 @@ def file_read():
     file_name = tkinter.filedialog.askopenfilename(filetypes=fTyp,initialdir=iDir)
     return(file_name)
 
-def Contours(img_gray):
+def ImgData(img_gray):
+    height,width = img_gray.shape[0],img_gray.shape[1]
+    all_areas = height * width
+    return(height,width,all_areas)
 
-    labels,contours = cv2.findContours(img_gray,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
-
+def GetContours(contours):
     Areas = []
     Diameters = []
     Density = []
+
+
 
 def none(x):
     pass
@@ -82,7 +84,7 @@ while True:
 
     img_copy = img.copy()
 
-    if cv2.waitKey(1) == 13:
+    if cv2.waitKey(1) == 13: #Enter key
         break
 
     threshold,blocksize = Adaptive()
@@ -96,12 +98,34 @@ while True:
             #remove small objects
             if cv2.contourArea(contours[i]) < 200:
                 continue
+
             rect = contours[i]
             x,y,w,h = cv2.boundingRect(rect)
             cv2.polylines(img_copy,contours[i],True,(255,0,0),1)
             cv2.rectangle(img_copy,(x,y),(x+w,y+h),(0,255,0),1)
 
     cv2.imshow("img_th",img_copy)
+
+img_height,img_width,all_areas = ImgData(img_gray)
+labels  = cv2.connectedComponentsWithStats(img_bit)
+n = labels[0]-1
+print(n)
+data = np.delete(labels[2],0,0)
+center = np.delete(labels[3],0,0)
+
+for i in range(0,len(contours)):
+    if len(contours[i])>0:
+
+        if cv2.contourArea(contours[i]) < 200:
+            continue
+
+    rect = contours[i]
+    x,y,w,h = cv2.boundingRect(rect)
+    cv2.polylines(img_copy,contours[i],True,(255,0,0),1)
+    cv2.rectangle(img_copy,(x,y),(x+w,y+h),(0,255,0),1)
+    text_x = int(round(x+w/3))
+    text_y = int(round(y+h/2))
+    cv2.putText(img_copy,str(i+1), (text_x,text_y),cv2.FONT_HERSHEY_PLAIN,1,(0,120,200))
 
 cv2.imshow("img_exp",img_copy)
 cv2.waitKey()
