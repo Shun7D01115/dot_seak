@@ -1,3 +1,4 @@
+from cmath import pi
 from pickletools import uint8
 from re import I
 from turtle import Turtle, width
@@ -77,6 +78,8 @@ Trackbar()
 
 img = cv2.imread(path)
 img_gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+openkernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(5,5))
+img_gray = cv2.morphologyEx(img_gray,cv2.MORPH_OPEN,openkernel)
 kernel = np.ones((5,5),np.uint8)
 img_copy = img.copy()
 
@@ -113,6 +116,8 @@ print(n)
 data = np.delete(labels[2],0,0)
 center = np.delete(labels[3],0,0)
 
+#hight,width,all_areas = ImgData(img_gray)
+
 for i in range(0,len(contours)):
     if len(contours[i])>0:
 
@@ -126,6 +131,14 @@ for i in range(0,len(contours)):
     text_x = int(round(x+w/3))
     text_y = int(round(y+h/2))
     cv2.putText(img_copy,str(i+1), (text_x,text_y),cv2.FONT_HERSHEY_PLAIN,1,(0,120,200))
+    #area = cv2.contourArea(contours[i])
+    #area = area/all_areas
+    #PixcelAreas.append(area)
+    #CulAreas.append(pi()*w*h/4)
+
+
+
+
 
 cv2.imshow("img_exp",img_copy)
 cv2.waitKey()
