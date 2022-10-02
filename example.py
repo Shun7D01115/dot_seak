@@ -13,7 +13,7 @@ def file_read():
     # ファイル選択ダイアログの表示
     root = tkinter.Tk()
     root.withdraw()
-    fTyp = [("",".tif")]
+    fTyp = [("",".jpg")]
     iDir = os.path.abspath(os.path.dirname(__file__))
     tkinter.messagebox.showinfo('粒径分布作成','処理画像を選択してください！')
     file = tkinter.filedialog.askopenfilename(filetypes = fTyp,initialdir = iDir)
@@ -26,7 +26,7 @@ def file_write(filename):
     # ファイル選択ダイアログの表示
     root = tkinter.Tk()
     root.withdraw()
-    fTyp = [("tiff", "*.tif")] #画像の種類を選択
+    fTyp = [("jpg", "*.jpg")] #画像の種類を選択
     iDir = os.path.abspath(os.path.dirname(__file__))
     tkinter.messagebox.showinfo('名前を付けて保存','保存先を指定してください')
     file = tkinter.filedialog.asksaveasfilename(filetypes = fTyp,initialdir = iDir,initialfile = filename)
