@@ -60,6 +60,8 @@ def Expdata():
     Areas_pixcel = []
     Areas_calculate = []
 
+    
+
 
 #get path
 path = File_read()
@@ -104,7 +106,7 @@ while True:
 
 cv2.destroyAllWindows()
 
-img_conclusion = img_copy
+img_result = img_copy
 
 for i in range(0,len(contours)):
     if len(contours[i]) > 0:
@@ -113,16 +115,17 @@ for i in range(0,len(contours)):
 
     rect = contours[i]
     x,y,w,h = cv2.boundingRect(rect)
-    img_conclusion = cv2.polylines(img_copy,contours[i],True,(255,0,0),1)
-    img_conclusion = cv2.rectangle(img_copy,(x,y),(x+w,y+h),(0,255,0),1)
+    img_result = cv2.polylines(img_copy,contours[i],True,(255,0,0),1)
+    img_result = cv2.rectangle(img_copy,(x,y),(x+w,y+h),(0,255,0),1)
     text_x = int(round(x+w/3))
     text_y = int(round(y+h/2))
-    img_conclusion = cv2.putText(img_copy,str(i+1),(text_x,text_y),cv2.FONT_HERSHEY_PLAIN,1,(0,120,200))
+    img_result = cv2.putText(img_copy,str(i+1),(text_x,text_y),cv2.FONT_HERSHEY_PLAIN,1,(0,120,200))
 
-cv2.imshow("Conclusion",img_conclusion)
+#show result
+cv2.imshow("Result",img_result)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
 
 #get pixcel info
-#img_height,img_width,all_areas = Imgdata(img_gray)
-#labels = cv2.connectedComponentsWithStats(img_bit)
+img_height,img_width,all_areas = Imgdata(img_gray)
+nlabels,labels,stats, _ = cv2.connectedComponentsWithStats(img_bit)
