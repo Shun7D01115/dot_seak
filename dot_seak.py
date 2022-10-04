@@ -7,6 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import math
+import random
 
 import os,tkinter,tkinter.filedialog,tkinter.messagebox
 from tkinter import messagebox
@@ -107,6 +108,7 @@ while True:
 cv2.destroyAllWindows()
 
 img_result = img_copy
+nlabels, labels, stats, _ = cv2.connectedComponentsWithStats(img_bit)
 
 num = []
 L_axis = []
@@ -128,7 +130,6 @@ for i in range(0,len(contours)):
         L_axis[i] = h
         S_axis[i] = w
 
-
     img_result = cv2.polylines(img_copy,contours[i],True,(255,0,0),1)
     img_result = cv2.rectangle(img_copy,(x,y),(x+w,y+h),(0,255,0),1)
     text_x = int(round(x+w/3))
@@ -142,4 +143,3 @@ cv2.destroyAllWindows()
 
 #get pixcel info
 img_height,img_width,all_areas = Imgdata(img_gray)
-nlabels,labels,stats, _ = cv2.connectedComponentsWithStats(img_bit)
