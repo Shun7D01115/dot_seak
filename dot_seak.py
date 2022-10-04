@@ -108,13 +108,27 @@ cv2.destroyAllWindows()
 
 img_result = img_copy
 
+num = []
+L_axis = []
+S_axis = []
+
 for i in range(0,len(contours)):
     if len(contours[i]) > 0:
         if cv2.contourArea(contours[i]) < 200:
             continue
 
+    #dot info
+    num[i] = i
     rect = contours[i]
     x,y,w,h = cv2.boundingRect(rect)
+    if w > h:
+        L_axis[i] = w
+        S_axis[i] = h
+    else:
+        L_axis[i] = h
+        S_axis[i] = w
+
+
     img_result = cv2.polylines(img_copy,contours[i],True,(255,0,0),1)
     img_result = cv2.rectangle(img_copy,(x,y),(x+w,y+h),(0,255,0),1)
     text_x = int(round(x+w/3))
