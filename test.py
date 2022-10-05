@@ -1,6 +1,7 @@
+from cmath import pi
 from pickletools import uint8
 from re import I
-from turtle import Turtle
+from turtle import Turtle, width
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
@@ -9,32 +10,14 @@ import math
 import random
 import json
 
-import os
-import tkinter
-import tkinter.filedialog
-import tkinter.messagebox
+import os,tkinter,tkinter.filedialog,tkinter.messagebox
 from tkinter import messagebox
 
 """
 /必要な機能/
-画像選択
-ドット探索
-閾値機能
-ドットデータの書き出し
-(
-    ナンバリング，直径，高さ，面積，体積(円柱，円錐etc)，平均高さ，平均直径，密度
-    分布を作るための何か(高さ度数分布，直径度数分布，円柱体積分布)
-)
-"""
-
-"""
-    画像形式
-    グレースケールと二値化画像
-    
     二値化画像によりナンバリング，エッジ，直径，面積，密度を求める
     グレースケールによりドットの高さを求める>>高さの最大値の入力が必須
     #高さと直径より楕円体，円柱近似による体積を計算
-
     ナンバリング，エッジ，直径，高さ，面積，密度,taisekiを.xlsxに出力
     ナンバリング画像を出力したい!!!
 """
@@ -58,8 +41,9 @@ def none(x):
 #Trackbar UI
 def Trackbar():
     cv2.namedWindow("Threshold")
-    cv2.resizeWindow("Threshold", 640, 240)
-    cv2.createTrackbar("Low", "Threshold", 100, 255, none)
+    cv2.resizeWindow("Threshold",640,240)
+    cv2.createTrackbar("Gaussian","Threshold",7,100,none)
+    cv2.createTrackbar("Threshold","Threshold",2,5,none)
 
 #Trackbar UI 
 def Adaptive():
@@ -164,9 +148,9 @@ while True:
             
             #show green and blue edges
             rect = contours[i]
-            x, y, w, h = cv2.boundingRect(rect)
-            cv2.polylines(img_copy, contours[i], True, (255, 0, 0), 1)
-            cv2.rectangle(img_copy, (x, y), (x+w, y+h), (0, 255, 0), 1)
+            x,y,w,h = cv2.boundingRect(rect)
+            cv2.polylines(img_copy,contours[i],True,(255,0,0),1)
+            cv2.rectangle(img_copy,(x,y),(x+w,y+h),(0,255,0),1)
 
     cv2.imshow("Threshold img",img_copy)
 
