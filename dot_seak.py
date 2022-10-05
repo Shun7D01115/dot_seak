@@ -52,6 +52,26 @@ def Adaptive():
     blocksize = 2 * gaussian + 3
     return(threshold,blocksize)
 
+def remove_object(img_bit,lower=None,upper=None):
+    nlabels,labels,stats,centroids = cv2.connectedComponentsWithStats(img_bit)
+
+    sizes = stats[1:, -1]
+    _img = np.zeros((labels.shape))
+
+    for i in range(1,nlabels):
+        if(lower is not None) and (upper is not None):
+            _img[labels == i] = 255
+        elif(lower is not None) and (upper is None):
+            if lower < sizes[i-1]:
+                _img[labels == i] = 255
+        elif(lower is None) and (upper is None):
+            if sizes[i-1] < upper:
+                _img[labels == i] = 255
+    
+    return _img
+
+
+
 def Expdata(nlabels,labels,contours,num,L_axis,S_axis,img_height,img_width,all_areas):
     Num = []
     Long_axis = []
@@ -81,12 +101,11 @@ def Expdata(nlabels,labels,contours,num,L_axis,S_axis,img_height,img_width,all_a
         #make contours mask
         base_img = np.zeros((img_height, img_width, 1))
         mask = base_img
-        mask = cv2.drawContours(mask,contours[i],-1,color=255,thickness=-1)
+        cv2.fillPoly(mask,contours[135],255)
         #輪郭のみが検出されているため，塗りつぶし処理をもう一度する
-
-
-
-
+        
+        contours_sub , _ = cv2.findContours(mask,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
+        cv2.drawContours(mask,contours_sub,-1,color=255,thickness=-1)
 
         Flag += 1
 
@@ -138,7 +157,6 @@ while True:
 cv2.destroyAllWindows()
 
 img_result = img_copy
-nlabels, labels, stats, _ = cv2.connectedComponentsWithStats(img_bit)
 
 for i in range(0,len(contours)):
     if len(contours[i]) > 0:
@@ -147,7 +165,6 @@ for i in range(0,len(contours)):
 #除外したものもcontoursとしては残っているためその部分の改造が必須
     rect = contours[i]
     x,y,w,h = cv2.boundingRect(rect)
-
     img_result = cv2.polylines(img_copy,contours[i],True,(255,0,0),1)
     img_result = cv2.rectangle(img_copy,(x,y),(x+w,y+h),(0,255,0),1)
     text_x = int(round(x+w/3))
@@ -161,10 +178,12 @@ cv2.destroyAllWindows()
 
 #get pixcel info
 img_height,img_width,all_areas = Imgdata(img_gray)
+nlabels, labels, stats, _ = cv2.connectedComponentsWithStats(img_bit)
 
-base_img = np.zeros((img_height, img_width, 1))
+
+base_img = np.zeros((img_height, img_width, 3))
 mask = base_img
-cv2.fillPoly(mask,contours[135],255)
+mask[labels == 135] = (255,255,255)
 cv2.imshow("show",mask)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
