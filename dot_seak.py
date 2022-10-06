@@ -45,21 +45,28 @@ def Adaptive():
     blocksize = 2 * gaussian + 3
     return(threshold,blocksize)
 
-def Expdata(nlabels,stats):
-    Num = []
-    Long_axis = []
-    Short_axis = []
-    Height = []
-    Volume = []
-    Density = []
-    Areas_pixcel = []
-    Areas_calculate = []
-    Flag = 1
-    base_mask = np.zeros(img.shape[0:3])
+def Expdata(nlabels,stats,img_gray):
+    Num = []#
+    Long_axis = []#
+    Short_axis = []#
+    Height = []#
+    Volume_pixcel = []#
+    Volume_cylinder = []
+    Volume_cone = []
+    Areas_pixcel = []#
+    Areas_calculate = []#
+    Density = 0
+    base_mask = np.zeros(img_gray.shape[0:3])
     white = [255,255,255]
+    ############################################
+    pixcel_length = 1
+    ############################################
 
     for i in range(1,nlabels):
         dot_mask = base_mask
+        dot_height = 0
+        dot_volume = 0
+        area_count = 0
         #input Num
         Num.append(i)
         #input axis
@@ -79,8 +86,25 @@ def Expdata(nlabels,stats):
                 for k in range(0, h):
                     if labels[x+j][y+k] != 0:
                         dot_mask[x+j][y+k] = white
+                        dot_volume += img_gray[x+j][y+k]
+                        area_count += area_count
+                        if dot_height < img_gray[x+j][y+k]:
+                            dot_height = img_gray[x+j][y+k]
             #input height,volume
+            dot_volume = dot_volume*pixcel_length*pixcel_length
+            area_count = area_count*pixcel_length*pixcel_length
+            Height.append(dot_height)
+            Volume_pixcel.append(dot_volume)
+            if w > h:
+                Long_axis.append(w)
+                Short_axis.append(h)
+            else:
+                Long_axis.append(h)
+                Short_axis.append(w)
+            Areas_pixcel.append(area_count)
+            Areas_calculate.append(np.pi*w*h)
             
+
 
 
 #############################################################################################
@@ -142,8 +166,14 @@ for i in range(1,nlabels):
             if labels[x+j][y+k] != 0:
                 bb[x+j][y+k] = white
 
-cv2.imshow("labels",bb)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+dot_height = 0
+x = stats[10][0]
+y = stats[10][1]
+w = stats[10][2]
+h = stats[10][3]
+for j in range(0,w):
+    for k in range(0,h):
+        if labels[x+j][y+k] != 0:
+            dot_height += img_gray[x+j,y+k]
 
-cv2.imwrite("out.jpg",bb)
+print(dot_height)
