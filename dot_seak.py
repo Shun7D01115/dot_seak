@@ -79,3 +79,14 @@ while True:
     img_copy = img.copy()
 
 cv2.destroyAllWindows()
+img_result = img_copy
+
+#draw black excepting contours
+img_height,img_width,all_areas=Imgdata(img_gray)
+base_img = np.zeros((img_height,img_width),np.uint8)
+mask = base_img
+_,mask = cv2.threshold(mask,100,255,cv2.THRESH_BINARY)
+cv2.fillPoly(mask,contours,255)
+
+#get pixel info
+nlabels,labels,stats,_=cv2.connectedComponentsWithStats(mask)
