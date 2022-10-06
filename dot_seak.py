@@ -1,7 +1,7 @@
 from cmath import pi
 from pickletools import uint8
 from re import I
-from turtle import Turtle, width
+from turtle import Turtle, color, width
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
@@ -9,6 +9,7 @@ import matplotlib.ticker as ticker
 import math
 import random
 import json
+import csv
 
 import os,tkinter,tkinter.filedialog,tkinter.messagebox
 from tkinter import messagebox
@@ -43,6 +44,43 @@ def Adaptive():
     threshold = cv2.getTrackbarPos("Threshold","Threshold")
     blocksize = 2 * gaussian + 3
     return(threshold,blocksize)
+
+def Expdata(nlabels,stats):
+    Num = []
+    Long_axis = []
+    Short_axis = []
+    Height = []
+    Volume = []
+    Density = []
+    Areas_pixcel = []
+    Areas_calculate = []
+    Flag = 1
+    base_mask = np.zeros(img.shape[0:3])
+    white = [255,255,255]
+
+    for i in range(1,nlabels):
+        dot_mask = base_mask
+        #input Num
+        Num.append(i)
+        #input axis
+        if stats[i][2] > stats[i][3]:
+            Long_axis.append(stats[i][2])
+            Short_axis.append(stats[i][3])
+        else:
+            Long_axis.append(stats[i][3])
+            Short_axis.append(stats[i][2])
+        #every dot data
+        for i in range(1, nlabels):
+            x = stats[i-1][0]
+            y = stats[i-1][1]
+            w = stats[i-1][2]
+            h = stats[i-1][3]
+            for j in range(0, w):
+                for k in range(0, h):
+                    if labels[x+j][y+k] != 0:
+                        dot_mask[x+j][y+k] = white
+            #input height,volume
+            
 
 
 #############################################################################################
@@ -81,7 +119,7 @@ while True:
 cv2.destroyAllWindows()
 img_result = img_copy
 
-#draw black excepting contours
+#draw black, excepting contours
 img_height,img_width,all_areas=Imgdata(img_gray)
 base_img = np.zeros((img_height,img_width),np.uint8)
 mask = base_img
@@ -90,3 +128,22 @@ cv2.fillPoly(mask,contours,255)
 
 #get pixel info
 nlabels,labels,stats,_=cv2.connectedComponentsWithStats(mask)
+
+bb = np.zeros(img.shape[0:3])
+white = [255,255,255]
+
+for i in range(1,nlabels):
+    x = stats[i-1][0]
+    y = stats[i-1][1]
+    w = stats[i-1][2]
+    h = stats[i-1][3]
+    for j in range(0,w):
+        for k in range(0,h):
+            if labels[x+j][y+k] != 0:
+                bb[x+j][y+k] = white
+
+cv2.imshow("labels",bb)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
+
+cv2.imwrite("out.jpg",bb)
