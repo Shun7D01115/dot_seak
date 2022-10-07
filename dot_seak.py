@@ -46,60 +46,6 @@ def Adaptive():
     blocksize = 2 * gaussian + 3
     return(threshold,blocksize)
 
-def Expdata(nlabels,labels,stats,img_gray):
-    Num = []#
-    Long_axis = []#
-    Short_axis = []#
-    Height = []#
-    Volume_pixcel = []#
-    Volume_cylinder = []
-    Volume_cone = []
-    Areas_pixcel = []#
-    Areas_calculate = []#
-    Density = 0
-    base_mask = np.zeros(img_gray.shape[0:3])
-    white = 255
-    ############################################
-    pixcel_length = 1
-    ############################################
-
-    for i in range(1,nlabels):
-        dot_mask = base_mask
-        dot_height = 0
-        dot_volume = 0
-        area_count = 0
-        #input Num
-        Num.append(i)
-        #input axis
-        if stats[i][2] > stats[i][3]:
-            Long_axis.append(stats[i][2])
-            Short_axis.append(stats[i][3])
-        else:
-            Long_axis.append(stats[i][3])
-            Short_axis.append(stats[i][2])
-        #every dot data
-        x = stats[i-1][0]
-        y = stats[i-1][1]
-        w = stats[i-1][2]
-        h = stats[i-1][3]
-        for j in range(0, w):
-            for k in range(0, h):
-                if labels[x+j][y+k] != 0:
-                    dot_mask[x+j][y+k] = white
-                    dot_volume += img_gray[x+j][y+k]
-                    area_count += 1
-                    if dot_height < img_gray[x+j][y+k]:
-                        dot_height = img_gray[x+j][y+k]
-        #input height,volume
-        dot_volume = dot_volume*pixcel_length*pixcel_length
-        area_count = area_count*pixcel_length*pixcel_length
-        Height.append(dot_height)
-        Volume_pixcel.append(dot_volume)
-        Areas_pixcel.append(area_count)
-        Areas_calculate.append(np.pi*w*h)
-
-    return(Num,Long_axis,Short_axis,Height,Volume_pixcel,Areas_pixcel,Areas_calculate)
-
 #############################################################################################
 #get path
 path = File_read()
@@ -146,13 +92,67 @@ cv2.fillPoly(mask,contours,255)
 #get pixel info
 nlabels,labels,stats,_=cv2.connectedComponentsWithStats(mask)
 
-bb = np.zeros(img.shape[0:3])
-white = [255,255,255]
+#############################################################################################
 
-Num,Long_axis,Short_axis,Height,Volume_pixcel,Areas_pixcel,Areas_calculate = Expdata(nlabels,labels,stats,img_gray)
-Data = np.vstack((Num,Long_axis,Short_axis,Height,Volume_pixcel,Areas_pixcel,Areas_calculate))
-D = Data.T
-f = open("out.csv","w",newline="")
-writer = csv.writer(f)
-writer.writerows(D)
-f.close()
+Num = []
+Long_axis = []
+Short_axis = []
+Height = []
+Volume_pixcel = []
+Volume_cylinder = []
+Volume_cone = []
+Areas_pixcel = []
+Areas_calculate = []
+Density = 0
+white = 255
+############################################
+pixcel_length = 1
+############################################
+
+for i in range(1, nlabels):
+    #dot_mask = base_mask
+    dot_height = 0
+    dot_volume = 0
+    area_count = 0
+    #input Num
+    Num.append(i)
+    #input axis
+    if stats[i][2] > stats[i][3]:
+        Long_axis.append(stats[i][2])
+        Short_axis.append(stats[i][3])
+    else:
+        Long_axis.append(stats[i][3])
+        Short_axis.append(stats[i][2])
+    #every dot data
+    x = stats[i-1][0]
+    y = stats[i-1][1]
+    w = stats[i-1][2]
+    h = stats[i-1][3]
+    for j in range(0, w):
+        for k in range(0, h):
+            if labels[x+j][y+k] == i-1:
+                dot_volume += img_gray[x+j][y+k]
+                area_count += 1
+                if dot_height < img_gray[x+j][y+k]:
+                    dot_height = img_gray[x+j][y+k]
+    #input height,volume
+    dot_volume = dot_volume*pixcel_length*pixcel_length
+    area_count = area_count*pixcel_length*pixcel_length
+    Height.append(dot_height)
+    Volume_pixcel.append(dot_volume)
+    Areas_pixcel.append(area_count)
+    Areas_calculate.append(np.pi*w*h)
+
+
+#Data = np.vstack((Num,Long_axis,Short_axis,Height,Volume_pixcel,Areas_pixcel,Areas_calculate))
+#D = Data.T
+# = open("out.csv","w",newline="")
+#writer = csv.writer(f)
+#writer.writerows(D)
+#f.close()
+
+for i, row in enumerate(stats):
+    print(f"label {i}")
+    print(f"* topleft: ({row[cv2.CC_STAT_LEFT]}, {row[cv2.CC_STAT_TOP]})")
+    print(f"* size: ({row[cv2.CC_STAT_WIDTH]}, {row[cv2.CC_STAT_HEIGHT]})")
+    print(f"* area: {row[cv2.CC_STAT_AREA]}")
