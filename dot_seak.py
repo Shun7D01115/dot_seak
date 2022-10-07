@@ -123,6 +123,8 @@ for i in range(1, nlabels):
         Long_axis.append(stats[i][cv2.CC_STAT_HEIGHT])
         Short_axis.append(stats[i][cv2.CC_STAT_WIDTH])
     #every dot data
+    ########################################################
+    #行列の向きの確認
     x = stats[i][cv2.CC_STAT_LEFT]
     y = stats[i][cv2.CC_STAT_TOP]
     w = stats[i][cv2.CC_STAT_WIDTH]
@@ -130,10 +132,12 @@ for i in range(1, nlabels):
     area = stats[i][cv2.CC_STAT_AREA]
     for j in range(0, w):
         for k in range(0, h):
-            if labels[x+j][y+k] == i:
-                dot_volume += img_gray[x+j][y+k]
-                if dot_height < img_gray[x+j][y+k]:
-                    dot_height = img_gray[x+j][y+k]
+            if i != labels[y+k][x+j]:
+                continue
+            dot_volume += img_gray[x+j][y+k]
+            if dot_height >= img_gray[x+j][y+k]:
+                continue
+            dot_height = img_gray[x+j][y+k]
     #input height,volume
     dot_volume = dot_volume*pixcel_length*pixcel_length
     area_count = area*pixcel_length*pixcel_length
