@@ -1,3 +1,4 @@
+from cProfile import label
 from cmath import pi
 from pickletools import uint8
 from re import I
@@ -45,7 +46,7 @@ def Adaptive():
     blocksize = 2 * gaussian + 3
     return(threshold,blocksize)
 
-def Expdata(nlabels,stats,img_gray):
+def Expdata(nlabels,labels,stats,img_gray):
     Num = []#
     Long_axis = []#
     Short_axis = []#
@@ -57,7 +58,7 @@ def Expdata(nlabels,stats,img_gray):
     Areas_calculate = []#
     Density = 0
     base_mask = np.zeros(img_gray.shape[0:3])
-    white = [255,255,255]
+    white = 255
     ############################################
     pixcel_length = 1
     ############################################
@@ -77,35 +78,27 @@ def Expdata(nlabels,stats,img_gray):
             Long_axis.append(stats[i][3])
             Short_axis.append(stats[i][2])
         #every dot data
-        for i in range(1, nlabels):
-            x = stats[i-1][0]
-            y = stats[i-1][1]
-            w = stats[i-1][2]
-            h = stats[i-1][3]
-            for j in range(0, w):
-                for k in range(0, h):
-                    if labels[x+j][y+k] != 0:
-                        dot_mask[x+j][y+k] = white
-                        dot_volume += img_gray[x+j][y+k]
-                        area_count += area_count
-                        if dot_height < img_gray[x+j][y+k]:
-                            dot_height = img_gray[x+j][y+k]
-            #input height,volume
-            dot_volume = dot_volume*pixcel_length*pixcel_length
-            area_count = area_count*pixcel_length*pixcel_length
-            Height.append(dot_height)
-            Volume_pixcel.append(dot_volume)
-            if w > h:
-                Long_axis.append(w)
-                Short_axis.append(h)
-            else:
-                Long_axis.append(h)
-                Short_axis.append(w)
-            Areas_pixcel.append(area_count)
-            Areas_calculate.append(np.pi*w*h)
-            
+        x = stats[i-1][0]
+        y = stats[i-1][1]
+        w = stats[i-1][2]
+        h = stats[i-1][3]
+        for j in range(0, w):
+            for k in range(0, h):
+                if labels[x+j][y+k] != 0:
+                    dot_mask[x+j][y+k] = white
+                    dot_volume += img_gray[x+j][y+k]
+                    area_count += 1
+                    if dot_height < img_gray[x+j][y+k]:
+                        dot_height = img_gray[x+j][y+k]
+        #input height,volume
+        dot_volume = dot_volume*pixcel_length*pixcel_length
+        area_count = area_count*pixcel_length*pixcel_length
+        Height.append(dot_height)
+        Volume_pixcel.append(dot_volume)
+        Areas_pixcel.append(area_count)
+        Areas_calculate.append(np.pi*w*h)
 
-
+    return(Num,Long_axis,Short_axis,Height,Volume_pixcel,Areas_pixcel,Areas_calculate)
 
 #############################################################################################
 #get path
@@ -156,24 +149,10 @@ nlabels,labels,stats,_=cv2.connectedComponentsWithStats(mask)
 bb = np.zeros(img.shape[0:3])
 white = [255,255,255]
 
-for i in range(1,nlabels):
-    x = stats[i-1][0]
-    y = stats[i-1][1]
-    w = stats[i-1][2]
-    h = stats[i-1][3]
-    for j in range(0,w):
-        for k in range(0,h):
-            if labels[x+j][y+k] != 0:
-                bb[x+j][y+k] = white
-
-dot_height = 0
-x = stats[10][0]
-y = stats[10][1]
-w = stats[10][2]
-h = stats[10][3]
-for j in range(0,w):
-    for k in range(0,h):
-        if labels[x+j][y+k] != 0:
-            dot_height += img_gray[x+j,y+k]
-
-print(dot_height)
+Num,Long_axis,Short_axis,Height,Volume_pixcel,Areas_pixcel,Areas_calculate = Expdata(nlabels,labels,stats,img_gray)
+Data = np.vstack((Num,Long_axis,Short_axis,Height,Volume_pixcel,Areas_pixcel,Areas_calculate))
+D = Data.T
+f = open("out.csv","w",newline="")
+writer = csv.writer(f)
+writer.writerows(D)
+f.close()
