@@ -9,19 +9,68 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import math
 import random
-import json
 import csv
+import re
 
-import os,tkinter,tkinter.filedialog,tkinter.messagebox
-from tkinter import messagebox
+import os
+import tkinter
+from tkinter import StringVar, messagebox
+from tkinter import filedialog
+from tkinter import ttk
 
 #############################################################################################
-#file road
-def File_read():
-    fTyp = [("Data file","*")]
-    iDir = os.path.abspath(os.path.dirname(__file__))
-    file_name = tkinter.filedialog.askopenfilename(filetypes=fTyp,initialdir=iDir)
-    return(file_name)
+#ボタンがクリックされたら実行
+def gui():
+    file_name = ""
+    img_length = ""
+    max_height = ""
+    def file_select():
+        nonlocal file_name
+        fTyp = [("Image File", "*.png *.jpg *.jpeg *.tif *.bmp"), ("PNG", "*.png"), ("JPEG", "*.jpg *.jpeg"), ("Tiff", "*.tif"), ("Bitmap", "*.bmp"), ("すべて", "*")]  # 拡張子の選択
+        iDir = os.path.abspath(os.path.dirname(__file__))
+        file_name = tkinter.filedialog.askopenfilename(filetypes=fTyp, initialdir=iDir)
+        input_box1.insert(tkinter.END, file_name)
+
+    def click():
+        nonlocal img_length
+        nonlocal max_height
+        img_length = float(input_box2.get())
+        max_height = float(input_box3.get())
+        root.quit()
+    
+    root = tkinter.Tk()
+
+    root.title("Python GUI")
+    root.geometry("360x240")
+
+    #入力欄の作成
+    input_box1 = tkinter.Entry(width=40)
+    input_box1.place(x=10, y=170)
+
+    #ラベルの作成
+    input_label = tkinter.Label(text="ファイル入力")
+    input_label.place(x=10, y=140)
+
+    #ボタンの作成
+    button1 = tkinter.Button(text="参照", command=file_select)
+    button1.place(x=260, y=167)
+
+    button2 = tkinter.Button(text="OK", command=click)
+    button2.place(x=180, y=200)
+
+    #img length
+    input_box2 = tkinter.Entry(width=25)
+    input_box2.place(x=10,y=40)
+    input_label2 = tkinter.Label(text="AFM画像の長さ[μm]を入力してください")
+    input_label2.place(x=10,y=10)
+    #dot max height
+    input_box3 = tkinter.Entry(width=25)
+    input_box3.place(x=10,y=100)
+    input_label3 = tkinter.Label(text="ドットの最大高さ[nm]を入力してください")
+    input_label3.place(x=10,y=70)
+
+    root.mainloop()
+    return(file_name,img_length,max_height)
 
 #pixcel data
 def Imgdata(img_gray):
@@ -47,9 +96,8 @@ def Adaptive():
     return(threshold,blocksize)
 
 #############################################################################################
-#get path
-path = File_read()
-file_name,text = os.path.splitext(os.path.basename(path))
+#path,画像長さ，ドット最大高さ取得
+path,img_length,max_height = gui()
 
 #show trackbar
 Trackbar()
@@ -70,7 +118,7 @@ while True:
     contours , _ = cv2.findContours(img_bit,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
 
     #remove enough small,big dots
-    contours = list(filter(lambda small:cv2.contourArea(small)>200,contours))
+    #contours = list(filter(lambda small:cv2.contourArea(small)>200,contours))
     contours = list(filter(lambda big:cv2.contourArea(big)<6000,contours))
 
     cv2.drawContours(img_copy,contours,-1,color=(255,0,0),thickness=1)
@@ -106,7 +154,18 @@ Areas_calculate = []
 Density = 0
 white = 255
 ############################################
-pixcel_length = 1
+print("bbb")
+print(img_length)
+print(max_height)
+print("aaa")
+print(type(img_width))
+print(type(img_length))
+print(type(max_height))
+print(type(256.0))
+#pixcel_length = int(img_length)/float(img_width)
+#height_dimless = int(max_height)/256.0
+height_dimless = 1
+pixcel_length =1
 ############################################
 
 for i in range(1, nlabels):
@@ -139,6 +198,7 @@ for i in range(1, nlabels):
                 continue
             dot_height = img_gray[x+j][y+k]
     #input height,volume
+    dot_height *= height_dimless
     dot_volume = dot_volume*pixcel_length*pixcel_length
     area_count = area*pixcel_length*pixcel_length
     Height.append(dot_height)
@@ -149,7 +209,5 @@ for i in range(1, nlabels):
 Data = np.vstack((Num,Long_axis,Short_axis,Height,Volume_pixcel,Areas_pixcel,Areas_calculate))
 f = open("out.csv","w",newline="")
 writer = csv.writer(f)
-writer.writerows(Data)
+writer.writerows(Data.T)
 f.close()
-
-print(img_gray[100][100])
