@@ -20,15 +20,20 @@ from tkinter import ttk
 
 #############################################################################################
 #ボタンがクリックされたら実行
+
+
 def gui():
     file_name = ""
     img_length = ""
     max_height = ""
+
     def file_select():
         nonlocal file_name
-        fTyp = [("Image File", "*.png *.jpg *.jpeg *.tif *.bmp"), ("PNG", "*.png"), ("JPEG", "*.jpg *.jpeg"), ("Tiff", "*.tif"), ("Bitmap", "*.bmp"), ("すべて", "*")]  # 拡張子の選択
+        fTyp = [("Image File", "*.png *.jpg *.jpeg *.tif *.bmp"), ("PNG", "*.png"), ("JPEG",
+                                                                                     "*.jpg *.jpeg"), ("Tiff", "*.tif"), ("Bitmap", "*.bmp"), ("すべて", "*")]  # 拡張子の選択
         iDir = os.path.abspath(os.path.dirname(__file__))
-        file_name = tkinter.filedialog.askopenfilename(filetypes=fTyp, initialdir=iDir)
+        file_name = tkinter.filedialog.askopenfilename(
+            filetypes=fTyp, initialdir=iDir)
         input_box1.insert(tkinter.END, file_name)
 
     def click():
@@ -37,7 +42,7 @@ def gui():
         img_length = float(input_box2.get())
         max_height = float(input_box3.get())
         root.quit()
-    
+
     root = tkinter.Tk()
 
     root.title("Python GUI")
@@ -60,70 +65,80 @@ def gui():
 
     #img length
     input_box2 = tkinter.Entry(width=25)
-    input_box2.place(x=10,y=40)
+    input_box2.place(x=10, y=40)
     input_label2 = tkinter.Label(text="AFM画像の長さ[μm]を入力してください")
-    input_label2.place(x=10,y=10)
+    input_label2.place(x=10, y=10)
     #dot max height
     input_box3 = tkinter.Entry(width=25)
-    input_box3.place(x=10,y=100)
+    input_box3.place(x=10, y=100)
     input_label3 = tkinter.Label(text="ドットの最大高さ[nm]を入力してください")
-    input_label3.place(x=10,y=70)
+    input_label3.place(x=10, y=70)
 
     root.mainloop()
-    return(file_name,img_length,max_height)
+    return (file_name, img_length, max_height)
 
 #pixcel data
+
+
 def Imgdata(img_gray):
-    height,width = img_gray.shape[0],img_gray.shape[1]
+    height, width = img_gray.shape[0], img_gray.shape[1]
     all_areas = height * width
-    return(height,width,all_areas)
+    return (height, width, all_areas)
+
 
 def none(x):
     pass
 
 #Trackbar UI
+
+
 def Trackbar():
     cv2.namedWindow("Threshold")
-    cv2.resizeWindow("Threshold",640,240)
-    cv2.createTrackbar("Gaussian","Threshold",7,100,none)
-    cv2.createTrackbar("Threshold","Threshold",2,5,none)
+    cv2.resizeWindow("Threshold", 640, 240)
+    cv2.createTrackbar("Gaussian", "Threshold", 7, 100, none)
+    cv2.createTrackbar("Threshold", "Threshold", 2, 5, none)
 
-#Trackbar UI 
+#Trackbar UI
+
+
 def Adaptive():
-    gaussian = cv2.getTrackbarPos("Gaussian","Threshold")
-    threshold = cv2.getTrackbarPos("Threshold","Threshold")
+    gaussian = cv2.getTrackbarPos("Gaussian", "Threshold")
+    threshold = cv2.getTrackbarPos("Threshold", "Threshold")
     blocksize = 2 * gaussian + 3
-    return(threshold,blocksize)
+    return (threshold, blocksize)
+
 
 #############################################################################################
 #path,画像長さ，ドット最大高さ取得
-path,img_length,max_height = gui()
+path, img_length, max_height = gui()
 
 #show trackbar
 Trackbar()
 
 #RGB to GRAY
 img = cv2.imread(path)
-img_gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-openkernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(5,5))
-img_gray = cv2.morphologyEx(img_gray,cv2.MORPH_OPEN,openkernel)
-kernel = np.ones((5,5),np.uint8)
+openkernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
+img_gray = cv2.morphologyEx(img_gray, cv2.MORPH_OPEN, openkernel)
+kernel = np.ones((5, 5), np.uint8)
 img_copy = img.copy()
 
 while True:
     #Threshold valiable
-    threshold,blocksize = Adaptive()
-    img_bit = cv2.adaptiveThreshold(img_gray,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY,blocksize,threshold)
-    contours , _ = cv2.findContours(img_bit,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
+    threshold, blocksize = Adaptive()
+    img_bit = cv2.adaptiveThreshold(
+        img_gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, blocksize, threshold)
+    contours, _ = cv2.findContours(
+        img_bit, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
     #remove enough small,big dots
     #contours = list(filter(lambda small:cv2.contourArea(small)>200,contours))
-    contours = list(filter(lambda big:cv2.contourArea(big)<6000,contours))
+    contours = list(filter(lambda big: cv2.contourArea(big) < 6000, contours))
 
-    cv2.drawContours(img_copy,contours,-1,color=(255,0,0),thickness=1)
-    cv2.imshow("Threshold img",img_copy)
-    if cv2.waitKey(1) == 13: #Enter Key
+    cv2.drawContours(img_copy, contours, -1, color=(255, 0, 0), thickness=1)
+    cv2.imshow("Threshold img", img_copy)
+    if cv2.waitKey(1) == 13:  # Enter Key
         break
     img_copy = img.copy()
 
@@ -131,14 +146,14 @@ cv2.destroyAllWindows()
 img_result = img_copy
 
 #draw black, excepting contours
-img_height,img_width,all_areas=Imgdata(img_gray)
-base_img = np.zeros((img_height,img_width),np.uint8)
+img_height, img_width, all_areas = Imgdata(img_gray)
+base_img = np.zeros((img_height, img_width), np.uint8)
 mask = base_img
-_,mask = cv2.threshold(mask,100,255,cv2.THRESH_BINARY)
-cv2.fillPoly(mask,contours,255)
+_, mask = cv2.threshold(mask, 100, 255, cv2.THRESH_BINARY)
+cv2.fillPoly(mask, contours, 255)
 
 #get pixel info
-nlabels,labels,stats,_=cv2.connectedComponentsWithStats(mask)
+nlabels, labels, stats, _ = cv2.connectedComponentsWithStats(mask)
 
 #############################################################################################
 
@@ -165,7 +180,7 @@ print(type(256.0))
 #pixcel_length = int(img_length)/float(img_width)
 #height_dimless = int(max_height)/256.0
 height_dimless = 1
-pixcel_length =1
+pixcel_length = 1
 ############################################
 
 for i in range(1, nlabels):
@@ -206,8 +221,9 @@ for i in range(1, nlabels):
     Areas_pixcel.append(area)
     Areas_calculate.append(np.pi*w*h)
 
-Data = np.vstack((Num,Long_axis,Short_axis,Height,Volume_pixcel,Areas_pixcel,Areas_calculate))
-f = open("out.csv","w",newline="")
+Data = np.vstack((Num, Long_axis, Short_axis, Height,
+                 Volume_pixcel, Areas_pixcel, Areas_calculate))
+f = open("out.csv", "w", newline="")
 writer = csv.writer(f)
 writer.writerows(Data.T)
 f.close()
