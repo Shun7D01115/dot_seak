@@ -1,5 +1,5 @@
 from cProfile import label
-from cmath import pi
+from cmath import e, pi
 from distutils.cmd import Command
 from pickletools import uint8
 from re import I
@@ -19,12 +19,10 @@ from tkinter import StringVar, messagebox
 from tkinter import filedialog
 from tkinter import ttk
 
-fin = 0
 
 #############################################################################################
 #ボタンがクリックされたら実行
 def gui():
-    global fin
     file_name = ""
     img_length = ""
     max_height = ""
@@ -37,19 +35,32 @@ def gui():
             filetypes=fTyp, initialdir=iDir)
         input_box1.insert(tkinter.END, file_name)
 
-    def click():
+    def isnumber(s):
+        try:
+            float(s)
+        except:
+            return False
+        else:
+            return True
+
+    def ok_click():
         nonlocal img_length
         nonlocal max_height
+        if not os.path.isfile(file_name):
+            messagebox.showerror("エラー","画像アドレスが間違っています")
+            return
+        if not (isnumber(input_box2.get()) and isnumber(input_box3.get())):
+            messagebox.showerror("エラー","数字を入力してください")
+            return
+
         img_length = float(input_box2.get())
         max_height = float(input_box3.get())
-        root.quit()
+        root.destroy()
 
     def close_click():
-        global fin
         if tkinter.messagebox.askokcancel(" ","プログラムを終了しますか？"):
-            fin = 1
             root.destroy()
-            return(fin)
+            quit()
 
     root = tkinter.Tk()
 
@@ -70,7 +81,7 @@ def gui():
     button1 = tkinter.Button(text="参照", command=file_select)
     button1.place(x=260, y=167)
 
-    button2 = tkinter.Button(text="OK", command=click)
+    button2 = tkinter.Button(text="OK", command=ok_click)
     button2.place(x=180, y=200)
 
     #img length
@@ -85,25 +96,18 @@ def gui():
     input_label3.place(x=10, y=70)
 
     root.mainloop()
-    if fin ==1:
-        quit()
     return (file_name, img_length, max_height)
 
 #pixcel data
-
-
 def Imgdata(img_gray):
     height, width = img_gray.shape[0], img_gray.shape[1]
     all_areas = height * width
     return (height, width, all_areas)
 
-
 def none(x):
     pass
 
 #Trackbar UI
-
-
 def Trackbar():
     cv2.namedWindow("Threshold")
     cv2.resizeWindow("Threshold", 640, 240)
@@ -111,14 +115,11 @@ def Trackbar():
     cv2.createTrackbar("Threshold", "Threshold", 2, 5, none)
 
 #Trackbar UI
-
-
 def Adaptive():
     gaussian = cv2.getTrackbarPos("Gaussian", "Threshold")
     threshold = cv2.getTrackbarPos("Threshold", "Threshold")
     blocksize = 2 * gaussian + 3
     return (threshold, blocksize)
-
 
 #############################################################################################
 #path,画像長さ，ドット最大高さ取得
@@ -152,6 +153,9 @@ while True:
     cv2.imshow("Threshold img", img_copy)
     if cv2.waitKey(1) == 13:  # Enter Key
         break
+    if cv2.getWindowProperty("Threshold img",cv2.WND_PROP_AUTOSIZE) == -1:
+        cv2.destroyAllWindows()
+        exit()
     img_copy = img.copy()
 
 cv2.destroyAllWindows()
@@ -166,6 +170,7 @@ cv2.fillPoly(mask, contours, 255)
 
 #get pixel info
 nlabels, labels, stats, _ = cv2.connectedComponentsWithStats(mask)
+
 
 #############################################################################################
 Num = []#
