@@ -1,5 +1,6 @@
 from cProfile import label
 from cmath import pi
+from distutils.cmd import Command
 from pickletools import uint8
 from re import I
 from turtle import Turtle, color, width
@@ -18,19 +19,19 @@ from tkinter import StringVar, messagebox
 from tkinter import filedialog
 from tkinter import ttk
 
+fin = 0
+
 #############################################################################################
 #ボタンがクリックされたら実行
-
-
 def gui():
+    global fin
     file_name = ""
     img_length = ""
     max_height = ""
 
     def file_select():
         nonlocal file_name
-        fTyp = [("Image File", "*.png *.jpg *.jpeg *.tif *.bmp"), ("PNG", "*.png"), ("JPEG",
-                                                                                     "*.jpg *.jpeg"), ("Tiff", "*.tif"), ("Bitmap", "*.bmp"), ("すべて", "*")]  # 拡張子の選択
+        fTyp = [("Image File", "*.png *.jpg *.jpeg *.tif *.bmp"), ("PNG", "*.png"), ("JPEG", "*.jpg *.jpeg"), ("Tiff", "*.tif"), ("Bitmap", "*.bmp"), ("すべて", "*")]  # 拡張子の選択
         iDir = os.path.abspath(os.path.dirname(__file__))
         file_name = tkinter.filedialog.askopenfilename(
             filetypes=fTyp, initialdir=iDir)
@@ -43,10 +44,19 @@ def gui():
         max_height = float(input_box3.get())
         root.quit()
 
+    def close_click():
+        global fin
+        if tkinter.messagebox.askokcancel(" ","プログラムを終了しますか？"):
+            fin = 1
+            root.destroy()
+            return(fin)
+
     root = tkinter.Tk()
 
-    root.title("Python GUI")
+    root.title("Information")
     root.geometry("360x240")
+
+    root.protocol("WM_DELETE_WINDOW",close_click)
 
     #入力欄の作成
     input_box1 = tkinter.Entry(width=40)
@@ -75,6 +85,8 @@ def gui():
     input_label3.place(x=10, y=70)
 
     root.mainloop()
+    if fin ==1:
+        quit()
     return (file_name, img_length, max_height)
 
 #pixcel data
@@ -156,7 +168,6 @@ cv2.fillPoly(mask, contours, 255)
 nlabels, labels, stats, _ = cv2.connectedComponentsWithStats(mask)
 
 #############################################################################################
-
 Num = []#
 Long_axis = []#
 Short_axis = []#
