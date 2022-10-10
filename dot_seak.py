@@ -133,7 +133,7 @@ while True:
         img_bit, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
     #remove enough small,big dots
-    #contours = list(filter(lambda small:cv2.contourArea(small)>200,contours))
+    contours = list(filter(lambda small:cv2.contourArea(small)>200,contours))
     contours = list(filter(lambda big: cv2.contourArea(big) < 6000, contours))
 
     cv2.drawContours(img_copy, contours, -1, color=(255, 0, 0), thickness=1)
@@ -169,16 +169,8 @@ Areas_calculate = []
 Density = 0
 white = 255
 ############################################
-print("bbb")
-print(img_length)
-print(max_height)
-print("aaa")
-print(type(img_width))
-print(type(img_length))
-print(type(max_height))
-print(type(256.0))
-#pixcel_length = int(img_length)/float(img_width)
-#height_dimless = int(max_height)/256.0
+pixcel_length = int(img_length)/float(img_width)
+height_dimless = int(max_height)/256.0
 height_dimless = 1
 pixcel_length = 1
 ############################################
@@ -220,6 +212,16 @@ for i in range(1, nlabels):
     Volume_pixcel.append(dot_volume)
     Areas_pixcel.append(area)
     Areas_calculate.append(np.pi*w*h)
+
+    img_result = cv2.polylines(img_result,contours[i-1],True,(255,0,0),1)
+    img_result = cv2.rectangle(img_result,(x,y),(x+w,y+h),(0,255,0),1)
+    text_x = int(round(x+2))
+    text_y = int(round(y+10))
+    img_result = cv2.putText(img_result,str(i+1),(text_x,text_y),cv2.FONT_HERSHEY_PLAIN,1,(0,255,255))
+
+cv2.imshow("Result",img_result)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
 
 Data = np.vstack((Num, Long_axis, Short_axis, Height,
                  Volume_pixcel, Areas_pixcel, Areas_calculate))
