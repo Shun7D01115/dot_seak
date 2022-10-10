@@ -157,19 +157,19 @@ nlabels, labels, stats, _ = cv2.connectedComponentsWithStats(mask)
 
 #############################################################################################
 
-Num = []
-Long_axis = []
-Short_axis = []
-Height = []
-Volume_pixcel = []
+Num = []#
+Long_axis = []#
+Short_axis = []#
+Height = []#
+Volume_pixcel = []#
 Volume_cylinder = []
 Volume_cone = []
-Areas_pixcel = []
-Areas_calculate = []
+Areas_pixcel = []#
+Areas_calculate = []#
 Density = 0
 white = 255
 ############################################
-pixcel_length = int(img_length)/float(img_width)
+pixcel_length = 1000*int(img_length)/float(img_width)
 height_dimless = int(max_height)/256.0
 height_dimless = 1
 pixcel_length = 1
@@ -208,6 +208,7 @@ for i in range(1, nlabels):
     dot_height *= height_dimless
     dot_volume = dot_volume*pixcel_length*pixcel_length
     area_count = area*pixcel_length*pixcel_length
+    Volume_cylinder.append(dot_height*area_count)
     Height.append(dot_height)
     Volume_pixcel.append(dot_volume)
     Areas_pixcel.append(area)
@@ -223,9 +224,10 @@ cv2.imshow("Result",img_result)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
 
-Data = np.vstack((Num, Long_axis, Short_axis, Height,
-                 Volume_pixcel, Areas_pixcel, Areas_calculate))
+Title = ["Num","長軸","短軸","高さ","面積","円柱体積","体積(明度)"]
+Data = np.vstack((Num, Long_axis, Short_axis, Height, Areas_pixcel, Volume_cylinder, Volume_pixcel))
 f = open("out.csv", "w", newline="")
 writer = csv.writer(f)
+writer.writerow(Title)
 writer.writerows(Data.T)
 f.close()
