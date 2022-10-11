@@ -121,6 +121,79 @@ def Adaptive():
     blocksize = 2 * gaussian + 3
     return (threshold, blocksize)
 
+def outDir():
+    dir_path = ""
+    csv_name = "out.csv"
+    img_name = "out.tif"
+    def file_select():
+        nonlocal dir_path
+        iDir = os.path.abspath(os.path.dirname(__file__))
+        dir_path = filedialog.askdirectory(initialdir=iDir)
+        input_box1.insert(tkinter.END,dir_path)
+
+    def ok_click():
+        nonlocal csv_name
+        nonlocal img_name
+        img_name = input_box2.get()
+        csv_name = input_box3.get()
+        if not os.path.basename(csv_name):
+            csv_name += ".csv"
+        if not os.path.basename(img_name):
+            img_name += ".tif"
+        print(dir_path)
+        print(os.path.basename(dir_path))
+        print(os.path.isdir(dir_path))
+        if not os.path.isdir(dir_path):
+            messagebox.showerror("エラー", "ディレクトリが存在しません")
+            return
+        root.destroy()
+
+    def close_click():
+        if tkinter.messagebox.askokcancel(" ", "保存していません，プログラムを終了しますか？"):
+            root.destroy()
+            quit()
+
+    root = tkinter.Tk()
+
+    root.title("Output Directory")
+    root.geometry("360x240")
+
+    root.protocol("WM_DELETE_WINDOW", close_click)
+
+    #入力欄の作成
+    input_box1 = tkinter.Entry(width=40)
+    input_box1.place(x=10, y=40)
+
+    #ラベルの作成
+    input_label = tkinter.Label(text="保存先を決定してください")
+    input_label.place(x=10, y=10)
+
+    #ボタンの作成
+    button1 = tkinter.Button(text="参照", command=file_select)
+    button1.place(x=260, y=37)
+
+    #入力欄の作成
+    input_box2 = tkinter.Entry(width=40)
+    input_box2.place(x=10, y=110)
+
+    #ラベルの作成
+    input_label2 = tkinter.Label(text="解析結果の画像名を入力してください")
+    input_label2.place(x=10, y=80)
+
+    #入力欄の作成
+    input_box3 = tkinter.Entry(width=40)
+    input_box3.place(x=10, y=170)
+
+    #ラベルの作成
+    input_label3 = tkinter.Label(text="CSVファイル名を入力してください")
+    input_label3.place(x=10, y=140)
+
+    button2 = tkinter.Button(text="OK", command=ok_click)
+    button2.place(x=180, y=210)
+
+    root.mainloop()
+    return(dir_path,csv_name,img_name)
+
 #############################################################################################
 #path,画像長さ，ドット最大高さ取得
 path, img_length, max_height = gui()
@@ -187,8 +260,6 @@ white = 255
 ############################################
 pixcel_length = 1000*int(img_length)/float(img_width)
 height_dimless = int(max_height)/256.0
-height_dimless = 1
-pixcel_length = 1
 ############################################
 
 for i in range(1, nlabels):
@@ -242,8 +313,15 @@ cv2.destroyAllWindows()
 
 Title = ["Num","長軸","短軸","高さ","面積","円柱体積","体積(明度)"]
 Data = np.vstack((Num, Long_axis, Short_axis, Height, Areas_pixcel, Volume_cylinder, Volume_pixcel))
-f = open("out.csv", "w", newline="")
+
+dir_name,csv_name,img_name = outDir()
+if dir_name[-1] != "/":
+    dir_name += "/"
+csv_path = dir_name + csv_name
+img_path = dir_name + img_name
+f = open(csv_path, "w", newline="")
 writer = csv.writer(f)
 writer.writerow(Title)
 writer.writerows(Data.T)
 f.close()
+cv2.imwrite(img_path,img_result)
