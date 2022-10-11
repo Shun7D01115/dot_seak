@@ -140,9 +140,6 @@ def outDir():
             csv_name += ".csv"
         if not os.path.basename(img_name):
             img_name += ".tif"
-        print(dir_path)
-        print(os.path.basename(dir_path))
-        print(os.path.isdir(dir_path))
         if not os.path.isdir(dir_path):
             messagebox.showerror("エラー", "ディレクトリが存在しません")
             return
@@ -268,13 +265,6 @@ for i in range(1, nlabels):
     dot_volume = 0
     #input Num
     Num.append(i)
-    #input axis
-    if stats[i][cv2.CC_STAT_WIDTH] > stats[i][cv2.CC_STAT_HEIGHT]:
-        Long_axis.append(stats[i][cv2.CC_STAT_WIDTH])
-        Short_axis.append(stats[i][cv2.CC_STAT_HEIGHT])
-    else:
-        Long_axis.append(stats[i][cv2.CC_STAT_HEIGHT])
-        Short_axis.append(stats[i][cv2.CC_STAT_WIDTH])
     #every dot data
     ########################################################
     #行列の向きの確認
@@ -291,6 +281,15 @@ for i in range(1, nlabels):
             if dot_height >= img_gray[x+j][y+k]:
                 continue
             dot_height = img_gray[x+j][y+k]
+    #input axis
+    w *= pixcel_length
+    h *= pixcel_length
+    if stats[i][cv2.CC_STAT_WIDTH] > stats[i][cv2.CC_STAT_HEIGHT]:
+        Long_axis.append(w)
+        Short_axis.append(h)
+    else:
+        Long_axis.append(h)
+        Short_axis.append(w)
     #input height,volume
     dot_height *= height_dimless
     dot_volume = dot_volume*pixcel_length*pixcel_length
