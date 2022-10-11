@@ -284,11 +284,11 @@ for i in range(1, nlabels):
     wid = w * pixcel_length
     hei = h * pixcel_length
     if stats[i][cv2.CC_STAT_WIDTH] > stats[i][cv2.CC_STAT_HEIGHT]:
-        Long_axis.append(w)
-        Short_axis.append(h)
+        Long_axis.append(wid)
+        Short_axis.append(hei)
     else:
-        Long_axis.append(h)
-        Short_axis.append(w)
+        Long_axis.append(hei)
+        Short_axis.append(wid)
     #input height,volume
     dot_height *= height_dimless
     dot_volume = dot_volume*pixcel_length*pixcel_length
