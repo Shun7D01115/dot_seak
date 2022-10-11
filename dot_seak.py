@@ -112,7 +112,7 @@ def Trackbar():
     cv2.namedWindow("Threshold")
     cv2.resizeWindow("Threshold", 640, 240)
     cv2.createTrackbar("Gaussian", "Threshold", 7, 100, none)
-    cv2.createTrackbar("Threshold", "Threshold", 2, 30, none)
+    cv2.createTrackbar("Threshold", "Threshold", 2, 25, none)
 
 #Trackbar UI
 def Adaptive():
@@ -219,7 +219,7 @@ while True:
     contours = list(filter(lambda small:cv2.contourArea(small)>200,contours))
     contours = list(filter(lambda big: cv2.contourArea(big) < 6000, contours))
 
-    cv2.drawContours(img_copy, contours, -1, color=(255, 0, 0), thickness=1)
+    cv2.drawContours(img_copy, contours, -1, color=(52,176,251), thickness=1)
     cv2.imshow("Threshold img", img_copy)
     if cv2.waitKey(1) == 13:  # Enter Key
         break
@@ -267,7 +267,6 @@ for i in range(1, nlabels):
     Num.append(i)
     #every dot data
     ########################################################
-    #行列の向きの確認
     x = stats[i][cv2.CC_STAT_LEFT]
     y = stats[i][cv2.CC_STAT_TOP]
     w = stats[i][cv2.CC_STAT_WIDTH]
@@ -282,8 +281,8 @@ for i in range(1, nlabels):
                 continue
             dot_height = img_gray[x+j][y+k]
     #input axis
-    w *= pixcel_length
-    h *= pixcel_length
+    wid = w * pixcel_length
+    hei = h * pixcel_length
     if stats[i][cv2.CC_STAT_WIDTH] > stats[i][cv2.CC_STAT_HEIGHT]:
         Long_axis.append(w)
         Short_axis.append(h)
@@ -300,11 +299,11 @@ for i in range(1, nlabels):
     Areas_pixcel.append(area)
     Areas_calculate.append(np.pi*w*h)
 
-    img_result = cv2.polylines(img_result,contours[i-1],True,(255,0,0),1)
-    img_result = cv2.rectangle(img_result,(x,y),(x+w,y+h),(0,255,0),1)
+    img_result = cv2.polylines(img_result,contours[i-1],True,(52,176,251),1)
+    img_result = cv2.rectangle(img_result,(x,y),(x+w,y+h),(255,0,0),1)
     text_x = int(round(x+2))
     text_y = int(round(y+10))
-    img_result = cv2.putText(img_result,str(i+1),(text_x,text_y),cv2.FONT_HERSHEY_PLAIN,1,(0,255,255))
+    img_result = cv2.putText(img_result,str(i+1),(text_x,text_y),cv2.FONT_HERSHEY_PLAIN,1,(20,220,20))
 
 cv2.imshow("Result",img_result)
 cv2.waitKey(0)
