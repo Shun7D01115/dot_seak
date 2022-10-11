@@ -112,7 +112,7 @@ def Trackbar():
     cv2.namedWindow("Threshold")
     cv2.resizeWindow("Threshold", 640, 240)
     cv2.createTrackbar("Gaussian", "Threshold", 7, 100, none)
-    cv2.createTrackbar("Threshold", "Threshold", 2, 5, none)
+    cv2.createTrackbar("Threshold", "Threshold", 2, 30, none)
 
 #Trackbar UI
 def Adaptive():
