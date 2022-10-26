@@ -1,32 +1,50 @@
 from fileinput import isfirstline
+from multiprocessing.resource_sharer import stop
+from tkinter import filedialog
+import tkinter
+from PIL import Image
 import os
 from sys import flags
+import sys
 import numpy as np
-import cv2
 import csv
 
 #mask = input("Input mask image file")
 
 def Img_input(Flag):
     while True:
+        typ = [("Image File", "*.png *.jpg *.jpeg *.tif *.bmp"), ("PNG", "*.png"),
+               ("JPEG", "*.jpg *.jpeg"), ("Tiff", "*.tif"), ("Bitmap", "*.bmp"), ("すべて", "*")]
+        iDir = os.path.abspath(os.path.dirname(__file__))
         if Flag == 0:
-            img = input("Input dot image file:")
+            print("Input dot image file:")
         else:
-            img = input("Input dot mask image file:")
+            print("Input dot mask image file:")
 
-        if not os.path.isfile(img):
+        file_name = filedialog.askopenfilename(filetypes=typ,initialdir=iDir)
+        print(file_name)
+        if len(file_name) == 0:
+            sys.exit()
+        if not os.path.isfile(file_name):
             print("Error: This path does not exist!!")
             continue
-        path_tuple = os.path.splitext(img)
-        if path_tuple[1] != (".png" or ".tif" or ".jpg" or ".jpeg"):
-            print("Error: This file not image file!!")
-            continue
         break
-    return(img,path_tuple)
+    return(file_name)
 
-img_path,path_tuple = Img_input(0)
-mask_path,path_tuple = Img_input(1)
-img = cv2.imread(img_path,flags=1)
-mask = cv2.imread(mask_path,flags=0)
+root = tkinter.Tk()
+root.withdraw()
 
+img_path = Img_input(0)
+mask_path = Img_input(1)
+img = np.array(Image.open(img_path))
+mask = np.array(Image.open(mask_path))
+
+root.destroy()
 #maskの色付き部分が判定できれば完成
+print(np.array_equal(img,mask))
+
+
+#画像保存
+#img_ff = Image.fromarray(img)
+#print(img_ff.mode)
+#img_ff.save("C:/users/shunk/programfree/_4/gwyddion/img/dafaea.jpg")
