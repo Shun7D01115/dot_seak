@@ -17,9 +17,9 @@ def Img_input(Flag):
                ("JPEG", "*.jpg *.jpeg"), ("Tiff", "*.tif"), ("Bitmap", "*.bmp"), ("すべて", "*")]
         iDir = os.path.abspath(os.path.dirname(__file__))
         if Flag == 0:
-            print("Input dot image file:")
+            print("ドットのイメージファイルを入力してください:")
         else:
-            print("Input dot mask image file:")
+            print("ドットにマーキングしたイメージファイルを入力してください:")
 
         file_name = filedialog.askopenfilename(filetypes=typ,initialdir=iDir)
         print(file_name)
@@ -35,16 +35,17 @@ root = tkinter.Tk()
 root.withdraw()
 
 img_path = Img_input(0)
-mask_path = Img_input(1)
+marking_path = Img_input(1)
 img = np.array(Image.open(img_path))
-mask = np.array(Image.open(mask_path))
+marking = np.array(Image.open(marking_path))
 
 root.destroy()
-#maskの色付き部分が判定できれば完成
-print(np.array_equal(img,mask))
-
+#差分をRの差が1でいいのかをもう一度再考する必要あり
+diff = img.astype(int) - marking.astype(int)
+diff = np.abs(diff)
+diff_bin = (diff > 1)*255
 
 #画像保存
-#img_ff = Image.fromarray(img)
-#print(img_ff.mode)
-#img_ff.save("C:/users/shunk/programfree/_4/gwyddion/img/dafaea.jpg")
+img_ff = Image.fromarray(diff_bin.astype(np.uint8))
+print(img_ff.mode)
+img_ff.save("C:/users/shunk/programfree/_4/gwyddion/img/dafaea.jpg")
