@@ -102,6 +102,8 @@ for i in range(1,nlabels):
     contours = cv2.findContours(mask_bin,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
     if i == 5:
         con = np.array(contours)
+        print(np.array(contours))
+        print(con)
     #for l in range(len(contours)):
     #    a = contours[0][0][l]
     #    if a[0][0] == 0 or a[0][1] == 0:
