@@ -1,6 +1,7 @@
 from ast import Num
 from fileinput import isfirstline
 from multiprocessing.resource_sharer import stop
+from pickletools import uint8
 from tkinter import filedialog
 import tkinter
 from PIL import Image,ImageFilter
@@ -67,16 +68,18 @@ Height = []#
 Volume = []#
 Areas = []#
 Density = []
-base = np.zeros((pixcel_height,pixcel_width),np.uint8)
-pixcel_height = float(img_length)/float(pixcel_height)
-pixcel_width = float(img_length)/float(pixcel_height)
-pix_areas = pixcel_height * pixcel_width
-max_height = float(max_height)/256.0
+height_onePix = float(img_length)/float(pixcel_height)
+width_onePix = float(img_length)/float(pixcel_width)
+pix_areas = height_onePix * width_onePix
+z_one = float(max_height)/256.0
 
 for i in range(1,nlabels):
-    mask_part = base
-    height = 0
+    mask_part = np.zeros((512,512,3),np.uint8)
+    height_h = 0
+    height_r = 0
     volume = 0
+    area_count = 0
+    Count = 0
     Num.append(i)
     areas = pix_areas * stats[i][cv2.CC_STAT_AREA]
     Areas.append(areas)
@@ -89,16 +92,32 @@ for i in range(1,nlabels):
             if labels[y+k][x+j] != i:
                 continue
             mask_part[y+k][x+j] = 255
-            if height <= img_gray[y+k][x+j]:
-                height = img_gray[y+k][x+j]
+            if height_h <= img_gray[y+k][x+j]:
+                height_h = img_gray[y+k][x+j]
             volume += img_gray[y+k][x+j]
-    height = max_height * height
-    volume = volume * pix_areas * max_height
-    Height.append(height)
+            area_count += 1
+
+    mask_gray = cv2.cvtColor(mask_part,cv2.COLOR_BGR2GRAY)
+    ret , mask_bin = cv2.threshold(mask_gray,100,255,cv2.THRESH_BINARY)
+    contours = cv2.findContours(mask_bin,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
+    if i == 5:
+        con = np.array(contours)
+    #for l in range(len(contours)):
+    #    a = contours[0][0][l]
+    #    if a[0][0] == 0 or a[0][1] == 0:
+    #        continue
+        Count += 1
+        height_r += img_gray[a[0][1],a[0][0]]
+    #height_r = float(height_r) / float(Count)
+    height_res = height_h - height_r
+    height_res *= z_one
+    volume = (volume * pix_areas - height_r * area_count * pix_areas) * z_one
+    Height.append(height_res)
     Volume.append(volume)
 
-    mask_part = cv2.threshold(mask_part,100,255,cv2.THRESH_BINARY)
-    contours , __ = cv2.findContours(mask_part,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
+    del mask_gray
+    del mask_bin
+    del contours
 
 Title = ["Num","Height","Volume","Areas"]
 Data = np.vstack((Num,Height,Volume,Areas))
@@ -119,3 +138,8 @@ f.close()
 #img_ff = Image.fromarray(mask.astype(np.uint8))
 #print(img_ff.mode)
 #img_ff.save("C:/users/shunk/programfree/_4/gwyddion/img/dafaea.jpg")
+
+
+#高さ，体積は下の高さからの差分で求める
+#直径はちょっと悩むやつ
+#度数分布表を作成する
