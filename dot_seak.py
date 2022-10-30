@@ -1,325 +1,148 @@
-from cProfile import label
-from cmath import e, pi
-from distutils.cmd import Command
+from ast import Num
+from fileinput import isfirstline
+from multiprocessing.resource_sharer import stop
 from pickletools import uint8
-from re import I
-from turtle import Turtle, color, width
-import cv2
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.ticker as ticker
-import math
-import random
-import csv
-import re
-
-import os
-import tkinter
-from tkinter import StringVar, messagebox
 from tkinter import filedialog
-from tkinter import ttk
+import tkinter
+from PIL import Image,ImageFilter
+import os
+from sys import flags
+import sys
+import numpy as np
+import cv2
+import csv
 
+import random
 
-#############################################################################################
-#ボタンがクリックされたら実行
-def gui():
-    file_name = ""
-    img_length = ""
-    max_height = ""
-
-    def file_select():
-        nonlocal file_name
-        fTyp = [("Image File", "*.png *.jpg *.jpeg *.tif *.bmp"), ("PNG", "*.png"), ("JPEG", "*.jpg *.jpeg"), ("Tiff", "*.tif"), ("Bitmap", "*.bmp"), ("すべて", "*")]  # 拡張子の選択
+def Img_input(Flag):
+    while True:
+        typ = [("Image File", "*.png *.jpg *.jpeg *.tif *.bmp"), ("PNG", "*.png"),
+               ("JPEG", "*.jpg *.jpeg"), ("Tiff", "*.tif"), ("Bitmap", "*.bmp"), ("すべて", "*")]
         iDir = os.path.abspath(os.path.dirname(__file__))
-        file_name = tkinter.filedialog.askopenfilename(
-            filetypes=fTyp, initialdir=iDir)
-        input_box1.insert(tkinter.END, file_name)
-
-    def isnumber(s):
-        try:
-            float(s)
-        except:
-            return False
+        if Flag == 0:
+            print("ドットのイメージファイルを入力してください:")
         else:
-            return True
+            print("ドットにマーキングしたイメージファイルを入力してください:")
 
-    def ok_click():
-        nonlocal img_length
-        nonlocal max_height
+        file_name = filedialog.askopenfilename(filetypes=typ,initialdir=iDir)
+        if len(file_name) == 0:
+            sys.exit()
         if not os.path.isfile(file_name):
-            messagebox.showerror("エラー","画像アドレスが間違っています")
-            return
-        if not (isnumber(input_box2.get()) and isnumber(input_box3.get())):
-            messagebox.showerror("エラー","数字を入力してください")
-            return
-
-        img_length = float(input_box2.get())
-        max_height = float(input_box3.get())
-        root.destroy()
-
-    def close_click():
-        if tkinter.messagebox.askokcancel(" ","プログラムを終了しますか？"):
-            root.destroy()
-            quit()
-
-    root = tkinter.Tk()
-
-    root.title("Information")
-    root.geometry("360x240")
-
-    root.protocol("WM_DELETE_WINDOW",close_click)
-
-    #入力欄の作成
-    input_box1 = tkinter.Entry(width=40)
-    input_box1.place(x=10, y=170)
-
-    #ラベルの作成
-    input_label = tkinter.Label(text="ファイル入力")
-    input_label.place(x=10, y=140)
-
-    #ボタンの作成
-    button1 = tkinter.Button(text="参照", command=file_select)
-    button1.place(x=260, y=167)
-
-    button2 = tkinter.Button(text="OK", command=ok_click)
-    button2.place(x=180, y=200)
-
-    #img length
-    input_box2 = tkinter.Entry(width=25)
-    input_box2.place(x=10, y=40)
-    input_label2 = tkinter.Label(text="AFM画像の長さ[μm]を入力してください")
-    input_label2.place(x=10, y=10)
-    #dot max height
-    input_box3 = tkinter.Entry(width=25)
-    input_box3.place(x=10, y=100)
-    input_label3 = tkinter.Label(text="ドットの最大高さ[nm]を入力してください")
-    input_label3.place(x=10, y=70)
-
-    root.mainloop()
-    return (file_name, img_length, max_height)
-
-#pixcel data
-def Imgdata(img_gray):
-    height, width = img_gray.shape[0], img_gray.shape[1]
-    all_areas = height * width
-    return (height, width, all_areas)
-
-def none(x):
-    pass
-
-#Trackbar UI
-def Trackbar():
-    cv2.namedWindow("Threshold")
-    cv2.resizeWindow("Threshold", 640, 240)
-    cv2.createTrackbar("Gaussian", "Threshold", 7, 100, none)
-    cv2.createTrackbar("Threshold", "Threshold", 2, 25, none)
-
-#Trackbar UI
-def Adaptive():
-    gaussian = cv2.getTrackbarPos("Gaussian", "Threshold")
-    threshold = cv2.getTrackbarPos("Threshold", "Threshold")
-    blocksize = 2 * gaussian + 3
-    return (threshold, blocksize)
-
-def outDir():
-    dir_path = ""
-    csv_name = "out.csv"
-    img_name = "out.tif"
-    def file_select():
-        nonlocal dir_path
-        iDir = os.path.abspath(os.path.dirname(__file__))
-        dir_path = filedialog.askdirectory(initialdir=iDir)
-        input_box1.insert(tkinter.END,dir_path)
-
-    def ok_click():
-        nonlocal csv_name
-        nonlocal img_name
-        img_name = input_box2.get()
-        csv_name = input_box3.get()
-        if not os.path.basename(csv_name):
-            csv_name += ".csv"
-        if not os.path.basename(img_name):
-            img_name += ".tif"
-        if not os.path.isdir(dir_path):
-            messagebox.showerror("エラー", "ディレクトリが存在しません")
-            return
-        root.destroy()
-
-    def close_click():
-        if tkinter.messagebox.askokcancel(" ", "保存していません，プログラムを終了しますか？"):
-            root.destroy()
-            quit()
-
-    root = tkinter.Tk()
-
-    root.title("Output Directory")
-    root.geometry("360x240")
-
-    root.protocol("WM_DELETE_WINDOW", close_click)
-
-    #入力欄の作成
-    input_box1 = tkinter.Entry(width=40)
-    input_box1.place(x=10, y=40)
-
-    #ラベルの作成
-    input_label = tkinter.Label(text="保存先を決定してください")
-    input_label.place(x=10, y=10)
-
-    #ボタンの作成
-    button1 = tkinter.Button(text="参照", command=file_select)
-    button1.place(x=260, y=37)
-
-    #入力欄の作成
-    input_box2 = tkinter.Entry(width=40)
-    input_box2.place(x=10, y=110)
-
-    #ラベルの作成
-    input_label2 = tkinter.Label(text="解析結果の画像名を入力してください")
-    input_label2.place(x=10, y=80)
-
-    #入力欄の作成
-    input_box3 = tkinter.Entry(width=40)
-    input_box3.place(x=10, y=170)
-
-    #ラベルの作成
-    input_label3 = tkinter.Label(text="CSVファイル名を入力してください")
-    input_label3.place(x=10, y=140)
-
-    button2 = tkinter.Button(text="OK", command=ok_click)
-    button2.place(x=180, y=210)
-
-    root.mainloop()
-    return(dir_path,csv_name,img_name)
-
-#############################################################################################
-#path,画像長さ，ドット最大高さ取得
-path, img_length, max_height = gui()
-
-#show trackbar
-Trackbar()
-
-#RGB to GRAY
-img = cv2.imread(path)
-img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-
-openkernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
-img_gray = cv2.morphologyEx(img_gray, cv2.MORPH_OPEN, openkernel)
-kernel = np.ones((5, 5), np.uint8)
-img_copy = img.copy()
-
-while True:
-    #Threshold valiable
-    threshold, blocksize = Adaptive()
-    img_bit = cv2.adaptiveThreshold(
-        img_gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, blocksize, threshold)
-    contours, _ = cv2.findContours(
-        img_bit, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-
-    #remove enough small,big dots
-    contours = list(filter(lambda small:cv2.contourArea(small)>200,contours))
-    contours = list(filter(lambda big: cv2.contourArea(big) < 6000, contours))
-
-    cv2.drawContours(img_copy, contours, -1, color=(52,176,251), thickness=1)
-    cv2.imshow("Threshold img", img_copy)
-    if cv2.waitKey(1) == 13:  # Enter Key
+            print("Error: This path does not exist!!")
+            continue
+        print(".........................................OK")
         break
-    if cv2.getWindowProperty("Threshold img",cv2.WND_PROP_AUTOSIZE) == -1:
-        cv2.destroyAllWindows()
-        exit()
-    img_copy = img.copy()
-
-cv2.destroyAllWindows()
-img_result = img_copy
-
-#draw black, excepting contours
-img_height, img_width, all_areas = Imgdata(img_gray)
-base_img = np.zeros((img_height, img_width), np.uint8)
-mask = base_img
-_, mask = cv2.threshold(mask, 100, 255, cv2.THRESH_BINARY)
-cv2.fillPoly(mask, contours, 255)
-
-#get pixel info
-nlabels, labels, stats, _ = cv2.connectedComponentsWithStats(mask)
+    return(file_name)
 
 
-#############################################################################################
+root = tkinter.Tk()
+root.withdraw()
+
+img_path = Img_input(0)
+marking_path = Img_input(1)
+img = cv2.imread(img_path)
+marking = cv2.imread(marking_path)
+
+root.destroy()
+
+############################################################
+
+img_length = input("画像の幅を入力して下さい(単位[μm]):")
+max_height = input("画像の最大高さを入力してください(単位[nm]):")
+pixcel_height , pixcel_width , __ = img.shape
+
+############################################################
+#   make mask
+diff = cv2.absdiff(img,marking)
+diff = cv2.cvtColor(diff,cv2.COLOR_BGR2GRAY)
+img_gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+__ , mask = cv2.threshold(diff,5,255,cv2.THRESH_BINARY)
+
+############################################################
+nlabels,labels,stats, __ = cv2.connectedComponentsWithStats(mask)
+
+############################################################
 Num = []#
-Long_axis = []#
-Short_axis = []#
+Axis = []
 Height = []#
-Volume_pixcel = []#
-Volume_cylinder = []
-Volume_cone = []
-Areas_pixcel = []#
-Areas_calculate = []#
-Density = 0
-white = 255
-############################################
-pixcel_length = 1000*int(img_length)/float(img_width)
-height_dimless = int(max_height)/256.0
-############################################
+Volume = []#
+Areas = []#
+Density = []
+height_onePix = float(img_length)/float(pixcel_height)
+width_onePix = float(img_length)/float(pixcel_width)
+pix_areas = height_onePix * width_onePix
+z_one = float(max_height)/256.0
 
-for i in range(1, nlabels):
-    #dot_mask = base_mask
-    dot_height = 0
-    dot_volume = 0
-    #input Num
+for i in range(1,nlabels):
+    mask_part = np.zeros((512,512,3),np.uint8)
+    height_h = 0
+    height_r = 0
+    volume = 0
+    area_count = 0
+    Count = 0
     Num.append(i)
-    #every dot data
-    ########################################################
+    areas = pix_areas * stats[i][cv2.CC_STAT_AREA]
+    Areas.append(areas)
     x = stats[i][cv2.CC_STAT_LEFT]
     y = stats[i][cv2.CC_STAT_TOP]
     w = stats[i][cv2.CC_STAT_WIDTH]
     h = stats[i][cv2.CC_STAT_HEIGHT]
-    area = stats[i][cv2.CC_STAT_AREA]
-    for j in range(0, w):
-        for k in range(0, h):
-            if i != labels[y+k][x+j]:
+    for j in range(0,w):
+        for k in range(0,h):
+            if labels[y+k][x+j] != i:
                 continue
-            dot_volume += img_gray[x+j][y+k]
-            if dot_height >= img_gray[x+j][y+k]:
-                continue
-            dot_height = img_gray[x+j][y+k]
-    #input axis
-    wid = w * pixcel_length
-    hei = h * pixcel_length
-    if stats[i][cv2.CC_STAT_WIDTH] > stats[i][cv2.CC_STAT_HEIGHT]:
-        Long_axis.append(wid)
-        Short_axis.append(hei)
-    else:
-        Long_axis.append(hei)
-        Short_axis.append(wid)
-    #input height,volume
-    dot_height *= height_dimless
-    dot_volume = dot_volume*pixcel_length*pixcel_length
-    area_count = area*pixcel_length*pixcel_length
-    Volume_cylinder.append(dot_height*area_count)
-    Height.append(dot_height)
-    Volume_pixcel.append(dot_volume)
-    Areas_pixcel.append(area)
-    Areas_calculate.append(np.pi*w*h)
+            mask_part[y+k][x+j] = 255
+            if height_h <= img_gray[y+k][x+j]:
+                height_h = img_gray[y+k][x+j]
+            volume += img_gray[y+k][x+j]
+            area_count += 1
 
-    img_result = cv2.polylines(img_result,contours[i-1],True,(52,176,251),1)
-    img_result = cv2.rectangle(img_result,(x,y),(x+w,y+h),(255,0,0),1)
-    text_x = int(round(x+2))
-    text_y = int(round(y+10))
-    img_result = cv2.putText(img_result,str(i+1),(text_x,text_y),cv2.FONT_HERSHEY_PLAIN,1,(20,220,20))
+    mask_gray = cv2.cvtColor(mask_part,cv2.COLOR_BGR2GRAY)
+    ret , mask_bin = cv2.threshold(mask_gray,100,255,cv2.THRESH_BINARY)
+    contours = cv2.findContours(mask_bin,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
+    if i == 5:
+        con = np.array(contours)
+        print(np.array(contours))
+        print(con)
+    #for l in range(len(contours)):
+    #    a = contours[0][0][l]
+    #    if a[0][0] == 0 or a[0][1] == 0:
+    #        continue
+        Count += 1
+        height_r += img_gray[a[0][1],a[0][0]]
+    #height_r = float(height_r) / float(Count)
+    height_res = height_h - height_r
+    height_res *= z_one
+    volume = (volume * pix_areas - height_r * area_count * pix_areas) * z_one
+    Height.append(height_res)
+    Volume.append(volume)
 
-cv2.imshow("Result",img_result)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+    del mask_gray
+    del mask_bin
+    del contours
 
-Title = ["Num","長軸","短軸","高さ","面積","円柱体積","体積(明度)"]
-Data = np.vstack((Num, Long_axis, Short_axis, Height, Areas_pixcel, Volume_cylinder, Volume_pixcel))
+Title = ["Num","Height","Volume","Areas"]
+Data = np.vstack((Num,Height,Volume,Areas))
 
-dir_name,csv_name,img_name = outDir()
-if dir_name[-1] != "/":
-    dir_name += "/"
-csv_path = dir_name + csv_name
-img_path = dir_name + img_name
-f = open(csv_path, "w", newline="")
+f = open("C:/Users/shunk/Downloads/data.csv","w",newline="")
 writer = csv.writer(f)
 writer.writerow(Title)
 writer.writerows(Data.T)
 f.close()
-cv2.imwrite(img_path,img_result)
+
+
+#
+#cv2.imshow("mak",)
+#cv2.waitKey()
+#cv2.destroyAllWindows()
+
+############################################################
+#画像保存
+#img_ff = Image.fromarray(mask.astype(np.uint8))
+#print(img_ff.mode)
+#img_ff.save("C:/users/shunk/programfree/_4/gwyddion/img/dafaea.jpg")
+
+
+#高さ，体積は下の高さからの差分で求める
+#直径はちょっと悩むやつ
+#度数分布表を作成する
