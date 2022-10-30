@@ -1,7 +1,10 @@
 from ast import Num
+from distutils import text_file
+from enum import Flag
 from fileinput import isfirstline
 from multiprocessing.resource_sharer import stop
 from pickletools import uint8
+from tabnanny import check
 from tkinter import filedialog
 import tkinter
 from PIL import Image,ImageFilter
@@ -9,140 +12,243 @@ import os
 from sys import flags
 import sys
 import numpy as np
+import pandas as pd
 import cv2
 import csv
 
 import random
 
-def Img_input(Flag):
-    while True:
+def Selecting(Flag):
+    def File(Flag,iDir):
         typ = [("Image File", "*.png *.jpg *.jpeg *.tif *.bmp"), ("PNG", "*.png"),
-               ("JPEG", "*.jpg *.jpeg"), ("Tiff", "*.tif"), ("Bitmap", "*.bmp"), ("すべて", "*")]
-        iDir = os.path.abspath(os.path.dirname(__file__))
-        if Flag == 0:
-            print("ドットのイメージファイルを入力してください:")
-        else:
-            print("ドットにマーキングしたイメージファイルを入力してください:")
+                ("JPEG", "*.jpg *.jpeg"), ("Tiff", "*.tif"), ("Bitmap", "*.bmp"), ("すべて", "*")]
+        while True:
+            if Flag == 0:
+                print("ドットのイメージファイルを入力してください:")
+            elif Flag == 1:
+                print("ドットにマーキングしたイメージファイルを入力してください:")
 
-        file_name = filedialog.askopenfilename(filetypes=typ,initialdir=iDir)
-        if len(file_name) == 0:
-            sys.exit()
-        if not os.path.isfile(file_name):
-            print("Error: This path does not exist!!")
-            continue
-        print(".........................................OK")
-        break
-    return(file_name)
-
-
-root = tkinter.Tk()
-root.withdraw()
-
-img_path = Img_input(0)
-marking_path = Img_input(1)
-img = cv2.imread(img_path)
-marking = cv2.imread(marking_path)
-
-root.destroy()
-
-############################################################
-
-img_length = input("画像の幅を入力して下さい(単位[μm]):")
-max_height = input("画像の最大高さを入力してください(単位[nm]):")
-pixcel_height , pixcel_width , __ = img.shape
-
-############################################################
-#   make mask
-diff = cv2.absdiff(img,marking)
-diff = cv2.cvtColor(diff,cv2.COLOR_BGR2GRAY)
-img_gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-__ , mask = cv2.threshold(diff,5,255,cv2.THRESH_BINARY)
-
-############################################################
-nlabels,labels,stats, __ = cv2.connectedComponentsWithStats(mask)
-
-############################################################
-Num = []#
-Axis = []
-Height = []#
-Volume = []#
-Areas = []#
-Density = []
-height_onePix = float(img_length)/float(pixcel_height)
-width_onePix = float(img_length)/float(pixcel_width)
-pix_areas = height_onePix * width_onePix
-z_one = float(max_height)/256.0
-
-for i in range(1,nlabels):
-    mask_part = np.zeros((512,512,3),np.uint8)
-    height_h = 0
-    height_r = 0
-    volume = 0
-    area_count = 0
-    Count = 0
-    Num.append(i)
-    areas = pix_areas * stats[i][cv2.CC_STAT_AREA]
-    Areas.append(areas)
-    x = stats[i][cv2.CC_STAT_LEFT]
-    y = stats[i][cv2.CC_STAT_TOP]
-    w = stats[i][cv2.CC_STAT_WIDTH]
-    h = stats[i][cv2.CC_STAT_HEIGHT]
-    for j in range(0,w):
-        for k in range(0,h):
-            if labels[y+k][x+j] != i:
+            path_name = filedialog.askopenfilename(filetypes=typ,initialdir=iDir)
+            if len(path_name) == 0:
+                sys.exit()
+            if not os.path.isfile(path_name):
+                print("Error: This path does not exist!!")
                 continue
-            mask_part[y+k][x+j] = 255
-            if height_h <= img_gray[y+k][x+j]:
-                height_h = img_gray[y+k][x+j]
-            volume += img_gray[y+k][x+j]
-            area_count += 1
+            print(".........................................OK")
+            break
+        return(path_name)
 
-    mask_gray = cv2.cvtColor(mask_part,cv2.COLOR_BGR2GRAY)
-    ret , mask_bin = cv2.threshold(mask_gray,100,255,cv2.THRESH_BINARY)
-    contours = cv2.findContours(mask_bin,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
-    if i == 5:
-        con = np.array(contours)
-        print(np.array(contours))
-        print(con)
-    #for l in range(len(contours)):
-    #    a = contours[0][0][l]
-    #    if a[0][0] == 0 or a[0][1] == 0:
-    #        continue
-        Count += 1
-        height_r += img_gray[a[0][1],a[0][0]]
-    #height_r = float(height_r) / float(Count)
-    height_res = height_h - height_r
-    height_res *= z_one
-    volume = (volume * pix_areas - height_r * area_count * pix_areas) * z_one
-    Height.append(height_res)
-    Volume.append(volume)
+    def Dirct(iDir):
+        while True:
+            print("CSVファイルの入力先を決定してください:")
+            path_name = filedialog.askdirectory(initialdir=iDir)
+            if len(path_name) == 0:
+                sys.exit()
+            if not os.path.isdir(path_name):
+                print("Error: This path does not exist!!")
+                continue
+            print(".........................................OK")
+            break
+        return(path_name)
+    iDir = os.path.abspath(os.path.dirname(__file__))
+    if Flag == 2:
+        path_name = Dirct(iDir)
+    else:
+        path_name = File(Flag,iDir)
 
-    del mask_gray
-    del mask_bin
-    del contours
+    return(path_name)
 
-Title = ["Num","Height","Volume","Areas"]
-Data = np.vstack((Num,Height,Volume,Areas))
+def freqDistribute(rank,data):
+    def NanMake(dat,base):
+        mat = np.zeros_like(base)
+        mat[:] = np.nan
+        for i in range(dat.size):
+            mat[i] = dat[i]
+        return(mat)
 
-f = open("C:/Users/shunk/Downloads/data.csv","w",newline="")
-writer = csv.writer(f)
-writer.writerow(Title)
-writer.writerows(Data.T)
-f.close()
+    data_rank = pd.Series(data)
+    data_cut = pd.cut(data_rank,bins=rank)
+    data_vc = data_cut.value_counts(sort=False)
+    data_numpy = data_vc.values
+    data_comp = NanMake(data_numpy,data)
+    rank_comp = NanMake(rank,data)
+    return (data_comp,rank_comp)
+
+def NumCheck(Flag):
+    while True:
+        if Flag == 0:
+            num = input("画像の幅を入力して下さい(単位[μm]):")
+        else:
+            num = input("画像の最大高さを入力してください(単位[nm]):")
+
+        if len(num) == 0:
+            print("Error:数値を入力してください")
+            continue
+        if not str.isdigit(num):
+            try:
+                float(num)
+            except ValueError:
+                print("Error:自然数か小数を入力してください")
+                continue
+        break
+    return(num)
 
 
-#cv2.imshow("mak",)
-#cv2.waitKey()
-#cv2.destroyAllWindows()
+while True:
+    root = tkinter.Tk()
+    root.withdraw()
 
-############################################################
-#画像保存
-#img_ff = Image.fromarray(mask.astype(np.uint8))
-#print(img_ff.mode)
-#img_ff.save("C:/users/shunk/programfree/_4/gwyddion/img/dafaea.jpg")
+    img_path = Selecting(0)
+    marking_path = Selecting(1)
+    img = cv2.imread(img_path)
+    marking = cv2.imread(marking_path)
+
+    root.destroy()
+
+    ############################################################
+    
+    img_length = NumCheck(0)
+    max_height = NumCheck(1)
+    pixcel_height , pixcel_width , __ = img.shape
+
+    ############################################################
+    #   make mask
+    diff = cv2.absdiff(img,marking)
+    diff = cv2.cvtColor(diff,cv2.COLOR_BGR2GRAY)
+    img_gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+    __ , mask = cv2.threshold(diff,5,255,cv2.THRESH_BINARY)
+
+    ############################################################
+    nlabels,labels,stats, __ = cv2.connectedComponentsWithStats(mask)
+
+    ############################################################
+    Num = []#
+    Axis = []
+    Height = []#
+    Volume = []#
+    Density = []
+    height_onePix = 1000 * float(img_length)/float(pixcel_height)
+    width_onePix = 1000 * float(img_length)/float(pixcel_width)
+    pix_areas = height_onePix * width_onePix
+    z_one = float(max_height)/256.0
+    img_result = img.copy()
+
+    for i in range(1,nlabels):
+        mask_part = np.zeros((pixcel_height,pixcel_width,3),np.uint8)
+        height_h = 0.0
+        height_r = 0.0
+        volume = 0.0
+        area_count = 0
+        Count = 0
+        Num.append(i)
+        area_count = stats[i][cv2.CC_STAT_AREA]
+        areas = pix_areas * area_count
+        x = stats[i][cv2.CC_STAT_LEFT]
+        y = stats[i][cv2.CC_STAT_TOP]
+        w = stats[i][cv2.CC_STAT_WIDTH]
+        h = stats[i][cv2.CC_STAT_HEIGHT]
+        for j in range(0,w):
+            for k in range(0,h):
+                if labels[y+k][x+j] != i:
+                    continue
+                mask_part[y+k][x+j] = 255
+                if height_h <= img_gray[y+k][x+j]:
+                    height_h = img_gray[y+k][x+j]
+                volume += img_gray[y+k][x+j]
+
+        mask_gray = cv2.cvtColor(mask_part,cv2.COLOR_BGR2GRAY)
+        __ , mask_bin = cv2.threshold(mask_gray,100,255,cv2.THRESH_BINARY)
+        contours = cv2.findContours(mask_bin,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
+
+        for l in range(1,len(contours[0][0])):
+            coordinate = contours[0][0][l]
+            if coordinate[0][0] == 0 or coordinate[0][1] == 0:
+                continue
+            if coordinate[0][0] == pixcel_width or coordinate[0][1] == pixcel_height:
+                continue
+            Count += 1
+            height_r += img_gray[coordinate[0][1],coordinate[0][0]]
+        if Count == 0:
+            height_row = 0.0
+        else :
+            height_row = float(height_r) / float(Count)
+        height_res = height_h - height_row
+        height_res *= z_one
+        dot_volume = (volume - height_row * area_count) * pix_areas * z_one
+        Height.append(height_res)
+        Volume.append(dot_volume)
+
+        img_result = cv2.rectangle(img_result,(x,y),(x+w,y+h),(255,0,0),1)
+        text_x = int(round(x+2))
+        text_y = int(round(y+10))
+        img_result = cv2.putText(img_result,str(i),(text_x,text_y),cv2.FONT_HERSHEY_PLAIN,1,(20,20,255))
+
+        del mask_gray
+        del mask_bin
+        del contours
 
 
-#高さ，体積は下の高さからの差分で求める
-#直径はちょっと悩むやつ
-#度数分布表を作成する
-##nanyakore
+    vo_rank = np.arange(0,500,10)
+    hei_rank = np.arange(0,10.2,0.2)
+    hei_vc , hei_rank_comp = freqDistribute(hei_rank,Height)
+    vo_vc , vo_rank_comp= freqDistribute(vo_rank,Volume)
+
+    ############################################################
+    Title = ["Num","Height","Volume","高さ階級","高さ","体積階級","体積"]
+    Data = np.vstack((Num,Height,Volume,hei_rank_comp,hei_vc,vo_rank_comp,vo_vc))
+    ############################################################
+    root = tkinter.Tk()
+    root.withdraw()
+    folder_path = Selecting(2)
+    root.destroy()
+
+    csvfile_name = "out"
+    while True:
+        print("保存するCSVファイルのファイル名を決定してください(拡張子.csvは必要ないです)")
+        csvfile_name = input("⇒")
+        if len(csvfile_name) == 0:
+            print("Error:ファイル名を入力してください")
+            continue
+        check_file = len(csvfile_name.split(".",1))
+        if check_file >= 2:
+            print("Error:拡張子が記述されています.")
+            continue
+        break
+
+    file_path_name = folder_path + "/" + csvfile_name
+    f = open(file_path_name + ".csv","w",newline="")
+    writer = csv.writer(f)
+    writer.writerow(Title)
+    writer.writerows(Data.T)
+    f.close()
+
+    result_path = file_path_name + ".jpg"
+
+    cv2.imshow("Result",img_result)
+    print("キー入力で終了します")
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+    cv2.imwrite(result_path,img_result)
+    print("CSVファイルは" + file_path_name + ".csv" + "にあります")
+    print("All Complete!!")
+    print("\n\n")
+
+    rep = 0
+    while True:
+        ques = input("作業を続けますか？ y/n:")
+        if ques == "y":
+            rep = 1
+            break
+        elif ques == "n":
+            break
+        else :
+            print("Error:Invalid input")
+            continue
+    if rep == 0:
+        sys.exit()
+    else:
+        continue
+
+################################################################################
+####直径を入れてない!!!!!!!!!!!!!!!!!!!!!!!!!!!
+################################################################################
