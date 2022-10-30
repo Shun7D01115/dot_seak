@@ -131,7 +131,6 @@ writer.writerows(Data.T)
 f.close()
 
 
-#
 #cv2.imshow("mak",)
 #cv2.waitKey()
 #cv2.destroyAllWindows()
@@ -146,3 +145,4 @@ f.close()
 #高さ，体積は下の高さからの差分で求める
 #直径はちょっと悩むやつ
 #度数分布表を作成する
+##nanyakore
