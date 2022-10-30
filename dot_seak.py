@@ -15,8 +15,7 @@ import numpy as np
 import pandas as pd
 import cv2
 import csv
-
-import random
+import time
 
 def Selecting(Flag):
     def File(Flag,iDir):
@@ -245,6 +244,8 @@ while True:
             print("Error:Invalid input")
             continue
     if rep == 0:
+        print("終了します，しばらくお待ちください..........")
+        time.sleep(2)
         sys.exit()
     else:
         continue
