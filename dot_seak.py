@@ -16,6 +16,14 @@ import pandas as pd
 import cv2
 import csv
 import time
+import webbrowser
+
+def EasterEgg():
+    print("README を読んでみて...........")
+    time.sleep(3)
+    url = "https://github.com/Shun7D01115/dot_seak"
+    webbrowser.open(url)
+    sys.exit()
 
 def Selecting(Flag):
     def File(Flag,iDir):
@@ -57,21 +65,21 @@ def Selecting(Flag):
 
     return(path_name)
 
-def freqDistribute(rank,data):
-    def NanMake(dat,base):
-        mat = np.zeros_like(base)
-        mat[:] = np.nan
-        for i in range(dat.size):
-            mat[i] = dat[i]
-        return(mat)
+def NanMake(dat, base):
+    mat = np.zeros_like(base)
+    mat[:] = np.nan
+    if dat.size == 0:
+        return (mat)
+    for i in range(1,dat.size):
+        mat[i-1] = dat[i-1]
+    return (mat)
 
+def freqDistribute(rank,data):
     data_rank = pd.Series(data)
     data_cut = pd.cut(data_rank,bins=rank)
     data_vc = data_cut.value_counts(sort=False)
     data_numpy = data_vc.values
-    data_comp = NanMake(data_numpy,data)
-    rank_comp = NanMake(rank,data)
-    return (data_comp,rank_comp)
+    return (data_numpy)
 
 def NumCheck(Flag):
     while True:
@@ -91,7 +99,6 @@ def NumCheck(Flag):
                 continue
         break
     return(num)
-
 
 while True:
     root = tkinter.Tk()
@@ -187,14 +194,24 @@ while True:
         del contours
 
 
-    vo_rank = np.arange(0,500,10)
-    hei_rank = np.arange(0,10.2,0.2)
-    hei_vc , hei_rank_comp = freqDistribute(hei_rank,Height)
-    vo_vc , vo_rank_comp= freqDistribute(vo_rank,Volume)
+    vo_rank = np.arange(0,25000,500)
+    hei_rank = np.arange(0,10,0.2)
+    hei_vc = freqDistribute(hei_rank,Height)
+    vo_vc = freqDistribute(vo_rank,Volume)
 
-    ############################################################
+    if vo_rank.size >= len(Volume):
+        Volume = NanMake(Volume,vo_vc)
+        Height = NanMake(Height,vo_vc)
+        Num = NanMake(Num,vo_rank)
+    else:
+        hei_rank_comp = NanMake(hei_rank,Volume)
+        vo_rank_comp = NanMake(vo_rank,Volume)
+        hei_comp = NanMake(hei_vc,Volume)
+        vo_comp = NanMake(vo_vc,Volume)
+
+############################################################
     Title = ["Num","Height","Volume","高さ階級","高さ","体積階級","体積"]
-    Data = np.vstack((Num,Height,Volume,hei_rank_comp,hei_vc,vo_rank_comp,vo_vc))
+    Data = np.vstack((Num,Height,Volume,hei_rank_comp,hei_comp,vo_rank_comp,vo_comp))
     ############################################################
     root = tkinter.Tk()
     root.withdraw()
@@ -234,8 +251,11 @@ while True:
 
     rep = 0
     while True:
-        ques = input("作業を続けますか？ y/n:")
-        if ques == "y":
+        print("\"help\" may save you")
+        ques = input("作業を続けますか？ (y/n):")
+        if ques == "help":
+            EasterEgg()
+        elif ques == "y":
             rep = 1
             break
         elif ques == "n":
