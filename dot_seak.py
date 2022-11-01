@@ -104,10 +104,15 @@ while True:
     root = tkinter.Tk()
     root.withdraw()
 
-    img_path = Selecting(0)
-    marking_path = Selecting(1)
-    img = cv2.imread(img_path)
-    marking = cv2.imread(marking_path)
+    while True:
+        img_path = Selecting(0)
+        marking_path = Selecting(1)
+        img = cv2.imread(img_path)
+        marking = cv2.imread(marking_path)
+        if img.size == marking.size:
+            break
+        print("Error:ピクセルサイズが異なります")
+        print("\n")
 
     root.destroy()
 
@@ -132,6 +137,7 @@ while True:
     Axis = []
     Height = []#
     Volume = []#
+    Volume_cal = []#
     Density = []
     height_onePix = 1000 * float(img_length)/float(pixcel_height)
     width_onePix = 1000 * float(img_length)/float(pixcel_width)
@@ -146,6 +152,7 @@ while True:
         volume = 0.0
         area_count = 0
         Count = 0
+        vol_cal = 0
         Num.append(i)
         area_count = stats[i][cv2.CC_STAT_AREA]
         areas = pix_areas * area_count
@@ -181,8 +188,13 @@ while True:
         height_res = height_h - height_row
         height_res *= z_one
         dot_volume = (volume - height_row * area_count) * pix_areas * z_one
+        vol_cal = height_res * areas
+        diameter = float(w+h) / 2.0
+        diameter *= width_onePix
         Height.append(height_res)
         Volume.append(dot_volume)
+        Volume_cal.append(vol_cal)
+        Axis.append(diameter)
 
         img_result = cv2.rectangle(img_result,(x,y),(x+w,y+h),(255,0,0),1)
         text_x = int(round(x+2))
@@ -196,22 +208,29 @@ while True:
 
     vo_rank = np.arange(0,25000,500)
     hei_rank = np.arange(0,10,0.2)
+    dia_rank = np.arange(0,200,4)
     hei_vc = freqDistribute(hei_rank,Height)
     vo_vc = freqDistribute(vo_rank,Volume)
+    vocal_vc = freqDistribute(vo_rank,Volume_cal)
+    dia_vc = freqDistribute(dia_rank,Axis)
 
     if vo_rank.size >= len(Volume):
         Volume = NanMake(Volume,vo_vc)
         Height = NanMake(Height,vo_vc)
-        Num = NanMake(Num,vo_rank)
+        Num = NanMake(Num,vo_vc)
+        Axis = NanMake(Axis,vo_vc)
     else:
         hei_rank_comp = NanMake(hei_rank,Volume)
         vo_rank_comp = NanMake(vo_rank,Volume)
+        dia_rank_comp = NanMake(dia_rank,Volume)
         hei_comp = NanMake(hei_vc,Volume)
         vo_comp = NanMake(vo_vc,Volume)
+        vocal_comp = NanMake(vocal_vc,Volume)
+        dia_comp = NanMake(dia_vc,Volume)
 
 ############################################################
-    Title = ["Num","Height","Volume","高さ階級","高さ","体積階級","体積"]
-    Data = np.vstack((Num,Height,Volume,hei_rank_comp,hei_comp,vo_rank_comp,vo_comp))
+    Title = ["Num","Diameter","Height","Volume","円柱","直径階級","直径","高さ階級","高さ","体積階級","体積","円柱体積"]
+    Data = np.vstack((Num,Axis,Height,Volume,Volume_cal,dia_rank_comp,dia_comp,hei_rank_comp,hei_comp,vo_rank_comp,vo_comp,vocal_comp))
     ############################################################
     root = tkinter.Tk()
     root.withdraw()
